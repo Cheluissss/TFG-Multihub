@@ -14,12 +14,19 @@
 \usepackage[scaled=0.95]{helvet}
 
 % Geometría y Márgenes
-\usepackage[a4paper, top=3cm, bottom=3cm, left=3cm, right=3cm]{geometry}
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+
+% Tipografía mejorada
+\usepackage[final]{microtype}
 
 % Espaciado e interlineado
 \usepackage{setspace}
 \onehalfspacing 
-\usepackage{parskip} 
+\usepackage{parskip}
+\raggedbottom
+
+% URLs y líneas largas
+\usepackage{xurl}
 
 % Gráficos y Tablas
 \usepackage{graphicx}
@@ -54,6 +61,14 @@
     pdfkeywords={ERP, React, Node.js, Multi-sede, RRHH}
 ]{hyperref}
 
+% Configuración de penalizaciones para ruptura de líneas
+\hyphenpenalty=50
+\exhyphenpenalty=50
+\linepenalty=10
+\interlinepenalty=0
+\emergencystretch=3em
+\sloppy
+
 % ==========================================================
 % CÓDIGO Y LISTADOS
 % ==========================================================
@@ -61,7 +76,7 @@
 \usepackage{listings}
 \lstset{
     language=java,
-    basicstyle=\ttfamily\small,
+    basicstyle=\ttfamily\footnotesize,
     breaklines=true,
     prebreak=\\raisebox{0ex}[0ex][0ex]{\\ensuremath{\\hookleftarrow}},
     postbreak=\\space,
@@ -80,6 +95,7 @@
     escapeinside={\%*}{*)},
     xleftmargin=0pt,
     xrightmargin=0pt,
+    columns=flexible,
 }
 
 % ==========================================================
