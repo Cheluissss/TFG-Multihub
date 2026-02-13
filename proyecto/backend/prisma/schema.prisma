@@ -7,20 +7,150 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(EMPLOYEE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("users")
-}
+// =======================
+// ENUMS
+// =======================
 
 enum Role {
   ADMIN
   MANAGER
   EMPLOYEE
+}
+
+enum ShiftType {
+  MORNING   // Mañana: 6:00 - 14:00
+  AFTERNOON // Tarde: 14:00 - 22:00
+  NIGHT     // Noche: 22:00 - 6:00
+  CUSTOM    // Personalizado
+}
+
+enum ShiftRequestStatus {
+  PENDING  // Pendiente de aprobación
+  APPROVED // Aprobada
+  REJECTED // Rechazada
+  CANCELLED // Cancelada
+}
+
+// =======================
+// MODELS
+// =======================
+
+model Sede {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  address     String
+  city        String
+  phone       String?
+  manager     User?    @relation("SedeManger", fields: [managerId], references: [id])
+  managerId   String?  @unique
+  
+  users       User[]   @relation("Sede")
+  shifts      Shift[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("sedes")
+  @@index([managerId])
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  password    String
+  role        Role     @default(EMPLOYEE)
+  
+  // Relación con sede
+  sede        Sede?    @relation("Sede", fields: [sedeId], references: [id], onDelete: SetNull)
+  sedeId      String?
+  
+  // Relación: User como manager de Sede
+  managedSede Sede?    @relation("SedeManger")
+  
+  // Turnos asignados
+  shifts      Shift[]  @relation("ShiftEmployee")
+  
+  // Solicitudes de permuta creadas
+  shiftRequests ShiftRequest[] @relation("ShiftRequestInitiator")
+  
+  // Solicitudes de permuta recibidas
+  receivedRequests ShiftRequest[] @relation("ShiftRequestTarget")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
+  @@index([sedeId])
+  @@index([email])
+}
+
+model Shift {
+  id          String   @id @default(cuid())
+  
+  // Información básica
+  type        ShiftType
+  date        DateTime
+  startTime   DateTime // Hora de inicio (para custom)
+  endTime     DateTime // Hora de fin (para custom)
+  
+  // Relación con empleado y sede
+  employee    User     @relation("ShiftEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId  String
+  
+  sede        Sede     @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  sedeId      String
+  
+  // Estado del turno
+  confirmed   Boolean  @default(false)
+  cancelled   Boolean  @default(false)
+  
+  // Solicitudes de permuta para este turno
+  requestsInitiated ShiftRequest[] @relation("InitiatorShift")
+  requestsReceived  ShiftRequest[] @relation("TargetShift")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("shifts")
+  @@unique([date, type, employeeId, sedeId])
+  @@index([employeeId])
+  @@index([sedeId])
+  @@index([date])
+}
+
+model ShiftRequest {
+  id          String   @id @default(cuid())
+  
+  // Turno solicitante
+  initiatorShift  Shift     @relation("InitiatorShift", fields: [initiatorShiftId], references: [id], onDelete: Cascade)
+  initiatorShiftId String
+  
+  // Turno objetivo (el que quiere)
+  targetShift     Shift     @relation("TargetShift", fields: [targetShiftId], references: [id], onDelete: Cascade)
+  targetShiftId   String
+  
+  // Usuarios involucrados
+  initiator       User      @relation("ShiftRequestInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  initiatorId     String    // Empleado que solicita la permuta
+  
+  target          User      @relation("ShiftRequestTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  targetId        String    // Empleado que recibe la solicitud
+  
+  // Estado
+  status          ShiftRequestStatus @default(PENDING)
+  reason          String?   // Motivo de la solicitud
+  
+  // Auditoría
+  decidedAt       DateTime?
+  approvedBy      String?   // ID del manager que aprobó
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("shift_requests")
+  @@index([initiatorId])
+  @@index([targetId])
+  @@index([status])
+  @@index([createdAt])
 }
