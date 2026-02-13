@@ -71,7 +71,6 @@ export interface LoginResponse {
 export interface RegisterRequest {
   email: string;
   name: string;
-  password: string;
   role?: UserRole;
   sedeId?: string;
 }

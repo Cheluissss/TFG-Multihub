@@ -12,7 +12,6 @@ export const LoginSchema = z.object({
 export const RegisterSchema = z.object({
   email: z.string().email('Email inválido'),
   name: z.string().min(2, 'Nombre debe tener al menos 2 caracteres'),
-  password: z.string().min(6, 'Contraseña debe tener al menos 6 caracteres'),
   role: z.enum(['ADMIN', 'MANAGER', 'EMPLOYEE']).optional().default('EMPLOYEE'),
   sedeId: z.string().optional(),
 });

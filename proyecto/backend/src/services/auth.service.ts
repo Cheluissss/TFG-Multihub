@@ -51,11 +51,12 @@ export class AuthService {
 
   /**
    * Registro de usuario - solo ADMIN puede crear nuevos usuarios
+   * El sistema genera automáticamente una contraseña temporal
    */
   async register(
     data: RegisterRequest,
     adminId: string
-  ): Promise<{ user: User; tokens: AuthTokens }> {
+  ): Promise<{ user: User; tempPassword: string }> {
     // Validar que el que registra sea admin
     const admin = await prisma.user.findUnique({
       where: { id: adminId },
@@ -65,7 +66,7 @@ export class AuthService {
       throw new Error('Solo administradores pueden crear usuarios');
     }
 
-    // Validar input
+    // Validar input (sin password, se genera automáticamente)
     const validated = RegisterSchema.parse(data);
 
     // Verificar que el email no exista
@@ -77,8 +78,9 @@ export class AuthService {
       throw new Error('Este email ya está registrado');
     }
 
-    // Hash de contraseña
-    const hashedPassword = await bcryptjs.hash(validated.password, 10);
+    // Generar contraseña temporal (10 caracteres aleatorios)
+    const tempPassword = Math.random().toString(36).slice(2, 12);
+    const hashedPassword = await bcryptjs.hash(tempPassword, 10);
 
     // Crear usuario
     const newUser = await prisma.user.create({
@@ -91,15 +93,12 @@ export class AuthService {
       },
     });
 
-    // Generar tokens
-    const tokens = generateTokens(newUser.id, newUser.email, newUser.role);
-
-    // Retornar usuario sin contraseña
+    // Retornar usuario sin contraseña y contraseña temporal
     const userWithoutPassword = this.excludePassword(newUser);
 
     return {
       user: userWithoutPassword,
-      tokens,
+      tempPassword,
     };
   }
 
@@ -130,6 +129,7 @@ export class AuthService {
 
   /**
    * Cambiar contraseña
+   * En el primer cambio, el usuario puede usar la contraseña temporal
    */
   async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
     // Buscar usuario
@@ -151,6 +151,11 @@ export class AuthService {
     // Validar que nueva contraseña sea diferente
     if (oldPassword === newPassword) {
       throw new Error('Nueva contraseña debe ser diferente a la actual');
+    }
+
+    // Validar longitud mínima
+    if (newPassword.length < 6) {
+      throw new Error('La contraseña debe tener al menos 6 caracteres');
     }
 
     // Hash nueva contraseña

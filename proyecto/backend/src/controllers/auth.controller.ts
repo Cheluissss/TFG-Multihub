@@ -56,17 +56,17 @@ export class AuthController {
         return;
       }
 
-      const { email, name, password, role, sedeId } = req.body;
+      const { email, name, role, sedeId } = req.body;
 
-      // Validar input
-      RegisterSchema.parse({ email, name, password, role, sedeId });
+      // Validar input (sin password, se genera automaticamente)
+      RegisterSchema.parse({ email, name, role, sedeId });
 
-      const result = await authService.register({ email, name, password, role, sedeId }, adminId);
+      const result = await authService.register({ email, name, role, sedeId }, adminId);
 
-      const response: ApiResponse<LoginResponse> = {
+      const response: ApiResponse<any> = {
         success: true,
         data: result,
-        message: 'Usuario creado exitosamente',
+        message: `Usuario creado. Contraseña temporal: ${result.tempPassword}. El usuario debe cambiarla en el primer acceso.`,
       };
 
       res.status(201).json(response);
