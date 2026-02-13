@@ -13,6 +13,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  sedeId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
