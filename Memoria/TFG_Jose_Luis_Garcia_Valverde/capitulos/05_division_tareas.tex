@@ -1,0 +1,201 @@
+% ==========================================================
+% CAPÍTULO 5: PLAN DE DESARROLLO ÁGIL Y DIVISIÓN DE TAREAS
+% ==========================================================
+\chapter{Plan de Desarrollo Ágil}
+\label{ch:desarrollo}
+
+\section{Metodología de Desarrollo}
+
+El proyecto se desarrolla bajo \textbf{metodología Scrum adaptada} con ciclos iterativos de 2 semanas.
+
+\subsection*{Parámetros del Proyecto}
+
+\begin{itemize}
+    \item \textbf{Duración Total:} 12 semanas (febrero 9 - mayo 4, 2026)
+    \item \textbf{Dedicación:} 15 horas/semana (promedio)
+    \item \textbf{Total de Horas Disponibles:} 180 horas
+    \item \textbf{Número de Sprints:} 6 sprints de 2 semanas
+    \item \textbf{Horas/Sprint:} ~30 horas (2 sprints paralelos = 60h/mes)
+\end{itemize}
+
+\section{Product Backlog Priorizado}
+
+El Product Backlog contiene todas las funcionalidades organizadas por prioridad, estimadas en \textbf{Story Points}.
+
+
+\subsection*{Grupo 1: Infraestructura y Seguridad (CRÍTICO - Sprint 1-2)}
+
+\begin{table}[h]
+    \centering
+    \caption{Backlog: Infraestructura}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c l}
+        \toprule
+        \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
+        \midrule
+        PBI-1 & Setup: git, ESLint, Prettier, carpetas & 3 & ALTA \\
+        PBI-2 & PostgreSQL + schema inicial (User, Sede, Shift) & 3 & ALTA \\
+        PBI-3 & Express: servidor, middleware, CORS & 2 & ALTA \\
+        PBI-4 & React + Vite + Tailwind + componentes base & 3 & ALTA \\
+        PBI-5 & JWT: access/refresh tokens + logout & 5 & ALTA \\
+        PBI-6 & Endpoint /auth/login + validaciones & 3 & ALTA \\
+        PBI-7 & Pantalla Login (frontend) & 3 & ALTA \\
+        PBI-8 & RBAC middleware (CEO/Manager/Employee) & 5 & ALTA \\
+        PBI-9 & Endpoint /auth/register (solo admin) & 2 & ALTA \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection*{Grupo 2: Gestión de Usuarios (Sprint 2-3)}
+
+\begin{table}[h]
+    \centering
+    \caption{Backlog: Usuarios y Sedes}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c l}
+        \toprule
+        \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
+        \midrule
+        PBI-10 & Endpoints CRUD usuarios (GET/POST/PUT/DELETE) & 5 & ALTA \\
+        PBI-11 & Endpoints CRUD sedes & 3 & ALTA \\
+        PBI-12 & Validaciones Zod (usuario, sede) & 2 & ALTA \\
+        PBI-13 & Pantalla Admin: Crear usuario + asignar rol/sede & 5 & ALTA \\
+        PBI-14 & Pantalla Admin: Listar usuarios, filtrar, editar & 5 & ALTA \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection*{Grupo 3: Dashboard CEO (Sprint 3-4)}
+
+\begin{table}[h]
+    \centering
+    \caption{Backlog: Dashboard Ejecutivo}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c l}
+        \toprule
+        \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
+        \midrule
+        PBI-15 & Endpoint GET /dashboard/metrics (ventas, ocupación, stock) & 8 & ALTA \\
+        PBI-16 & Pantalla Dashboard: layout KPIs básico & 5 & ALTA \\
+        PBI-17 & Gráficas Recharts (líneas, barras, tablas) & 5 & MEDIA \\
+        PBI-18 & TanStack Query: caché de datos en frontend & 3 & MEDIA \\
+        PBI-19 & Filtros por fecha y sede & 3 & MEDIA \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection*{Grupo 4: Gestión de Turnos (Sprint 3-5) - CORE}
+
+\begin{table}[h]
+    \centering
+    \caption{Backlog: Turnos}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c l}
+        \toprule
+        \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
+        \midrule
+        PBI-20 & Endpoints CRUD turnos (crear, listar, cancelar) & 8 & ALTA \\
+        PBI-21 & Validación overlaps + unit tests & 5 & ALTA \\
+        PBI-22 & Endpoint confirmar turno (empleado) & 3 & ALTA \\
+        PBI-23 & Calendario Gerente: semanal + crear turno & 8 & ALTA \\
+        PBI-24 & Calendario Empleado: semanal/mensual & 5 & ALTA \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection*{Grupo 5: Permutas de Turnos (Sprint 5)}
+
+\begin{table}[h]
+    \centering
+    \caption{Backlog: Solicitudes de Permuta}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c l}
+        \toprule
+        \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
+        \midrule
+        PBI-25 & Endpoint crear/listar ShiftRequest & 5 & MEDIA \\
+        PBI-26 & Endpoint aprobar/rechazar permuta & 5 & MEDIA \\
+        PBI-27 & Pantalla Gerente: Centro de Notificaciones & 5 & MEDIA \\
+        PBI-28 & Pantalla Empleado: Solicitar permuta & 5 & MEDIA \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection*{Grupo 6: Inventario (Sprint 5-6)}
+
+\begin{table}[h]
+    \centering
+    \caption{Backlog: Gestión de Productos}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c l}
+        \toprule
+        \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
+        \midrule
+        PBI-29 & Endpoints CRUD productos (crear, editar, listar) & 5 & MEDIA \\
+        PBI-30 & Endpoint ajustar stock + log cambios & 5 & MEDIA \\
+        PBI-31 & Alertas bajo stock (lógica backend) & 2 & MEDIA \\
+        PBI-32 & Pantalla Gerente: Catálogo productos & 5 & MEDIA \\
+        PBI-33 & Pantalla Gerente: Ajustar stock & 3 & MEDIA \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection*{Grupo 7: Nóminas (Sprint 6 - OPCIONAL)}
+
+\begin{table}[h]
+    \centering
+    \caption{Backlog: Gestión de Nóminas}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c l}
+        \toprule
+        \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
+        \midrule
+        PBI-34 & Endpoint subir PDF nómina (validación básica) & 5 & BAJA \\
+        PBI-35 & Endpoint listar nóminas empleado & 2 & BAJA \\
+        PBI-36 & Pantalla Gerente: Subir nóminas & 3 & BAJA \\
+        PBI-37 & Pantalla Empleado: Mis nóminas + descarga & 3 & BAJA \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+
+\subsection*{Grupo 8: Feedback y Testing (Sprint 6 - OPCIONAL)}
+
+\begin{table}[h]
+    \centering
+    \caption{Backlog: Feedback y Testing}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c l}
+        \toprule
+        \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
+        \midrule
+        PBI-38 & Endpoint feedback (crear, listar, cambiar estado) & 5 & BAJA \\
+        PBI-39 & Pantalla Empleado: Formulario feedback & 2 & BAJA \\
+        PBI-40 & Pantalla CEO: Tablero feedback & 3 & BAJA \\
+        PBI-41 & Unit tests: 50+ tests, 80\% cobertura & 13 & BAJA \\
+        PBI-42 & Integration tests: 5+ flujos críticos & 8 & BAJA \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\section{Planificación de Sprints (6 x 2 semanas)}
+
+\subsection*{Sprint 1 (Feb 9-22): Infraestructura y Autenticación}
+\textbf{PBIs:} 1-7 (28 SP)
+
+
+\subsection*{Sprint 2 (Feb 23-Mar 8): RBAC y Gestión de Usuarios}
+\textbf{PBIs:} 8-14 (30 SP)
+
+\subsection*{Sprint 3 (Mar 9-22): Gestión de Turnos}
+\textbf{PBIs:} 20-24 (28 SP)
+
+\subsection*{Sprint 4 (Mar 23-Apr 5): Dashboard CEO}
+\textbf{PBIs:} 15-19 (26 SP)
+
+\subsection*{Sprint 5 (Apr 6-19): Permutas + Inventario}
+\textbf{PBIs:} 25-33 (30 SP)
+
+\subsection*{Sprint 6 (Apr 20-May 4): Nóminas, Feedback y Testing}
+\textbf{PBIs:} 34-42 (30 SP)
+

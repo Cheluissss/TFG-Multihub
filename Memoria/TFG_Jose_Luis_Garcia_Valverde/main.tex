@@ -1,0 +1,207 @@
+\documentclass[12pt, a4paper, oneside]{report}
+
+% ==========================================================
+% PAQUETES DE CONFIGURACIÓN Y ESTILO
+% ==========================================================
+
+% Codificación e idioma
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish, es-tabla]{babel} 
+\usepackage{tabularx}
+% Tipografía principal: Palatino (serif) para cuerpo, Helvetica (sans) para títulos
+\usepackage{mathpazo} 
+\usepackage[scaled=0.95]{helvet}
+
+% Geometría y Márgenes
+\usepackage[a4paper, top=3cm, bottom=3cm, left=3cm, right=3cm]{geometry}
+
+% Espaciado e interlineado
+\usepackage{setspace}
+\onehalfspacing 
+\usepackage{parskip} 
+
+% Gráficos y Tablas
+\usepackage{graphicx}
+\usepackage{booktabs} 
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\captionsetup{font=small, labelfont=bf, margin=1cm} 
+
+% Colores
+\usepackage{xcolor}
+% Definición de colores corporativos (UMU y generales)
+\definecolor{umuRed}{RGB}{204, 0, 0}      % Rojo Institucional
+\definecolor{umuBlue}{RGB}{0, 51, 102}    % Azul Institucional
+\definecolor{primaryColor}{RGB}{0, 51, 102} % Usamos el azul como primario para headers
+\definecolor{grayText}{RGB}{80, 80, 80}
+
+% Bibliografía
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{bibliografia.bib}
+
+% Enlaces interactivos
+\usepackage[
+    colorlinks=true,
+    linkcolor=umuBlue,
+    citecolor=umuRed,
+    urlcolor=umuBlue,
+    pdfauthor={José Luis García Valverde},
+    pdftitle={TFG Gestión Empresarial Multi-Sede},
+    pdfsubject={Trabajo Fin de Grado},
+    pdfkeywords={ERP, React, Node.js, Multi-sede, RRHH}
+]{hyperref}
+
+% ==========================================================
+% DISEÑO DE CABECERAS Y TÍTULOS
+% ==========================================================
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small \sffamily \nouppercase{\leftmark}} 
+\fancyhead[R]{\small \sffamily \thepage} 
+\renewcommand{\headrulewidth}{0.5pt} 
+\renewcommand{\headrule}{\hbox to\headwidth{\color{umuBlue}\leaders\hrule height \headrulewidth\hfill}}
+
+\usepackage{titlesec}
+
+% Formato de capítulos
+\titleformat{\chapter}[display]
+  {\normalfont\sffamily\huge\bfseries\color{umuBlue}}
+  {\filleft\fontsize{60}{60}\selectfont\color{grayText!30}\thechapter}
+  {-1ex}
+  {\filleft\titlerule[2pt]\vspace{1ex}}
+  [\vspace{-1ex}]
+
+% Formato de secciones
+\titleformat{\section}
+  {\normalfont\sffamily\Large\bfseries\color{umuBlue}}
+  {\thesection}{1em}{}
+
+% Formato de subsecciones
+\titleformat{\subsection}
+  {\normalfont\sffamily\large\bfseries\color{umuBlue}}
+  {\thesubsection}{1em}{}
+
+% ==========================================================
+% DATOS DEL DOCUMENTO
+% ==========================================================
+\newcommand{\tituloTFG}{Aplicación Web Responsiva para la Gestión Empresarial Multi-Sede}
+\newcommand{\subtituloTFG}{Diseño e Implementación de una Plataforma de Gestión de Recursos Humanos y Operaciones con Control de Roles}
+
+% DATOS PERSONALES
+\newcommand{\autor}{José Luis García Valverde}
+\newcommand{\dni}{49309752Y}
+\newcommand{\email}{jl.garciavalverde@um.es}
+
+% DATOS ACADÉMICOS
+\newcommand{\director}{Jose Antonio Miñarro Gimenez}
+\newcommand{\grado}{Grado en Ingeniería Informática} 
+\newcommand{\universidad}{Universidad de Murcia}
+\newcommand{\facultad}{Facultad de Informática}
+\newcommand{\fecha}{Diciembre de 2025}
+
+% ==========================================================
+% INICIO DEL DOCUMENTO
+% ==========================================================
+\begin{document}
+
+% --- PORTADA ---
+\begin{titlepage}
+    \centering
+    \thispagestyle{empty} 
+    
+    % Logos
+    \begin{minipage}{0.45\textwidth}
+        \flushleft
+        \includegraphics[height=2cm]{imagenes/logo_um.jpg} 
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \flushright
+        \includegraphics[height=2cm]{imagenes/logo_fium.png} 
+    \end{minipage}
+    
+    \vspace{2cm}
+    
+    {\scshape\LARGE \universidad \par}
+    \vspace{0.2cm}
+    {\scshape\Large \facultad \par}
+    \vspace{0.5cm}
+    {\scshape\large \grado \par}
+    
+    \vspace{2cm}
+    
+    % Título
+    \noindent\rule{\linewidth}{2pt} \par
+    \vspace{0.5cm}
+    {\huge\bfseries\sffamily\color{umuBlue} \tituloTFG \par}
+    \vspace{0.8cm}
+    {\Large \itshape \subtituloTFG \par}
+    \vspace{0.5cm}
+    \noindent\rule{\linewidth}{2pt} \par
+    
+    \vfill
+    
+    % Bloque de Autor y Tutor
+    \begin{minipage}{0.9\textwidth}
+        \begin{flushright}
+            \large
+            \textbf{Alumno:} \autor \\
+            \small DNI: \dni \\
+            \small \email \\
+            \vspace{0.8cm}
+            \large
+            \textbf{Tutor:} \director
+        \end{flushright}
+    \end{minipage}
+    
+    \vfill
+    {\large \fecha \par}
+\end{titlepage}
+
+% --- PRELIMINARES ---
+\pagenumbering{roman} 
+\setcounter{page}{1}
+
+% Resumen / Abstract
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+Este Trabajo de Fin de Grado presenta el diseño y desarrollo de una plataforma web integral para la gestión empresarial en entornos multi-sede. La solución aborda la problemática de la fragmentación de datos en organizaciones distribuidas, centralizando la gestión de Recursos Humanos, operaciones y control de inventario en un único sistema.
+
+Desarrollada bajo el stack tecnológico PERN (PostgreSQL, Express, React, Node.js) y reforzada con TypeScript, la aplicación ofrece una experiencia de usuario moderna y adaptativa (Mobile-First). El sistema implementa un robusto control de acceso basado en roles (RBAC) que diferencia claramente las funciones estratégicas (CEO), tácticas (Gerentes) y operativas (Empleados), optimizando así los flujos de trabajo y la toma de decisiones basada en datos.
+
+\vspace{1cm}
+\textbf{Palabras clave:} ERP, Gestión Multi-sede, Desarrollo Web, React, Node.js, SaaS.
+
+\newpage
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+
+% --- CONTENIDO PRINCIPAL ---
+\pagenumbering{arabic} 
+\setcounter{page}{1}
+
+% ==========================================================
+% CAPÍTULOS
+% ==========================================================
+
+\input{capitulos/01_introduccion}
+\input{capitulos/02_estado_arte}
+\input{capitulos/03_stack_tecnologico}
+\input{capitulos/04_secciones}
+\input{capitulos/05_division_tareas}
+
+% ==========================================================
+% BIBLIOGRAFÍA
+% ==========================================================
+\printbibliography[heading=bibintoc, title={Bibliografía}]
+
+\end{document}

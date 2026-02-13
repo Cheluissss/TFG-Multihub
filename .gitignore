@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+*/node_modules/
+dist/
+*/dist/
+build/
+*/build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*/.env
+*/.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# OS
+Thumbs.db
+
+# Python (for LaTeX tools)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.out
+*.toc
+*.lof
+*.lot
+
+# Docker
+.dockerignore
+
+# Git
+.gitkeep

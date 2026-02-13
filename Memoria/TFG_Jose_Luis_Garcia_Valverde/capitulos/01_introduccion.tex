@@ -1,0 +1,113 @@
+\chapter{Introducción}
+\label{ch:introduccion}
+
+\section{Contexto y Motivación}
+
+La transformación digital ha dejado de ser una ventaja competitiva para convertirse en un requisito de supervivencia en el panorama empresarial actual. Las organizaciones con estructuras distribuidas o multi-sede enfrentan un desafío particular: la necesidad de una \textbf{centralización analítica} que proporcione a la dirección visibilidad global sobre el negocio, sin sacrificar la \textbf{agilidad operacional} que demandan las sedes locales para responder a su entorno específico.
+
+\subsection*{La Problemática de los Silos de Información}
+
+En la práctica, muchas PYMEs y empresas medianas del sector retail y servicios (cadenas de tiendas, restaurantes, centros de fitness, establecimientos de logística) adolecen de una fragmentación tecnológica conocida como ``silos de información''. Los datos críticos—Recursos Humanos, gestión de inventario, rendimiento operativo—residen dispersos en sistemas desconectados, software legado o, frecuentemente, en hojas de cálculo no estandarizadas y propensas a errores humanos.
+
+Esta desconexión se traduce en tres problemas operativos concretos:
+
+\begin{itemize}
+    \item \textbf{Ceguera estratégica en la dirección:} Los directivos carecen de un cuadro de mando integrado que muestre en tiempo real métricas consolidadas (ventas globales, ocupación de plantilla, stock disponible) en cada sede. Sin esta visibilidad, la toma de decisiones se ralentiza y la detección de anomalías es reactiva, no proactiva. Esto puede retrasar decisiones críticas de expansión, cierre de sedes o reallocation de recursos en varias semanas.
+    
+    \item \textbf{Sobrecarga administrativa en gerentes locales:} Los responsables de cada sede se ven obligados a gestionar manualmente la asignación de turnos, reconciliar hojas de presencia con sistemas de nómina desacoplados y mantener inventarios en spreadsheets. Estudios del sector indican que los gerentes dedican entre 4 y 8 horas semanales a tareas administrativas no estratégicas, reduciendo el tiempo disponible para supervisión, formación de personal y mejora operativa.
+    
+    \item \textbf{Experiencia deficiente del empleado:} Los trabajadores operativos, típicamente sin acceso a ordenador de escritorio, no pueden consultar sus turnos próximos, solicitar permutas, o acceder a documentación laboral desde sus dispositivos personales. Esta fricción reduce satisfacción, incrementa consultas innecesarias al gerente y contribuye a una mayor rotación de personal.
+\end{itemize}
+
+\subsection*{Solución Propuesta}
+
+El presente Trabajo de Fin de Grado ahonda en la necesidad de resolver estos retos mediante el diseño e implementación de una \textbf{plataforma web integral y moderna}. El proyecto propone un \textbf{ERP modular} que unifique la gestión operativa con el análisis de negocio en un único ecosistema digital, escalable y accesible desde cualquier dispositivo. De esta forma, se eliminan las barreras tradicionales entre sede central y sucursales, permitiendo que información fluya en tiempo real y que cada rol (directivo, gerente, empleado) disponga exactamente de lo que necesita para desempeñar su labor de forma eficiente.
+
+\section{Objetivos del Proyecto}
+
+\subsection{Objetivo General}
+Diseñar, desarrollar y desplegar una aplicación web de gestión empresarial (ERP modular) basada en una arquitectura Cliente-Servidor moderna, que centralice la administración de recursos humanos y operaciones en entornos multi-sede, garantizando la consistencia de datos, la seguridad en el acceso y una experiencia de usuario adaptativa a diferentes dispositivos.
+
+\subsection{Objetivos Específicos}
+Para alcanzar el objetivo general, se establecen las siguientes metas organizadas en tres categorías: técnicas, funcionales y de calidad.
+
+\subsubsection{Objetivos Técnicos}
+\begin{itemize}
+    \item \textbf{Diseño de Arquitectura Escalable y Desacoplada:} Implementar una arquitectura Cliente-Servidor mediante una API RESTful (Backend en Node.js/Express) e interfaz SPA (Frontend en React), permitiendo:
+    \begin{itemize}
+        \item Separación clara de responsabilidades que facilita el desarrollo y mantenimiento de una sola persona.
+        \item Independencia de componentes para iterar y testear cada parte de forma aislada.
+        \item Preparación para escalar el proyecto con nuevos clientes (aplicación móvil nativa, dashboards de terceros) sin refactorizar la lógica de negocio central.
+        \item Mayor legibilidad y simplificación del debugging al aislar problemas por capa (frontend vs. backend).
+    \end{itemize}
+    
+    \item \textbf{Seguridad Integral y Control de Acceso Basado en Roles (RBAC):} Desarrollar un módulo de autenticación y autorización robusto que garantice:
+    \begin{itemize}
+        \item Identificación segura mediante JWT con expiración temporal.
+        \item Autorización granular basada en tres roles jerárquicos (CEO, Gerente, Empleado) siguiendo el principio de mínimo privilegio.
+        \item Auditoría de acceso a datos sensibles (nóminas, información contractual).
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Objetivos Funcionales}
+\begin{itemize}
+    \item \textbf{Dashboard Ejecutivo Integral:} Implementar un cuadro de mando para directivos que proporcione:
+    \begin{itemize}
+        \item Visualización comparativa de beneficios y ventas con granularidad por sede y período temporal.
+        \item Métricas de RRHH consolidadas (headcount, tasas de absentismo, desviaciones de plantilla).
+        \item Acceso centralizado a comentarios constructivos de empleados filtrados por ubicación.
+        \item \textbf{Métrica de éxito:} Reducción de tiempo para obtener un informe de desempeño multi-sede de 2-3 horas a menos de 5 minutos.
+    \end{itemize}
+    
+    \item \textbf{Planificador de Turnos y Gestión de Incidencias:} Reducir carga administrativa del gerente mediante:
+    \begin{itemize}
+        \item Herramienta visual para asignación de turnos con detección de conflictos de solapamiento.
+        \item Centro de notificaciones para solicitudes de empleados (cambios de turno, permisos).
+        \item Gestión de permutas entre empleados con aprobación/rechazo del gerente.
+        \item \textbf{Métrica de éxito:} Reducción de tiempo de asignación semanal de turnos de 2-3 horas a 30 minutos.
+    \end{itemize}
+    
+    \item \textbf{Control de Inventario Localizado y CRUD de Productos:} Gestión desacoplada por sede que incluya:
+    \begin{itemize}
+        \item Catálogo de productos con precio, descripción y disponibilidad.
+        \item Herramientas de ajuste de stock y auditoría de movimientos.
+        \item Generación de alertas por bajo stock.
+    \end{itemize}
+    
+    \item \textbf{Portal Auto-Gestión para Empleados:} Proporcionar al personal operativo acceso móvil a:
+    \begin{itemize}
+        \item Visualización de próximos turnos asignados (semanal y mensual).
+        \item Solicitud formalizada de cambios de turno y visualización de estado de solicitudes.
+        \item Descarga de nóminas y documentación laboral.
+        \item \textbf{Métrica de éxito:} Reducción de consultas administrativas en un 40\% en los primeros 3 meses post-lanzamiento.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Objetivos de Calidad y Testing}
+\begin{itemize}
+    \item \textbf{Cobertura de Testing Completa:} Implementar estrategia de testing multinivel:
+    \begin{itemize}
+        \item Unit tests para lógica de negocio crítica (cálculo de horas, validación de turnos).
+        \item Integration tests para flujos de datos entre frontend-backend.
+        \item E2E tests para casos de uso críticos (login, asignación de turnos, descarga de nómina).
+        \item \textbf{Métrica de éxito:} Cobertura de código mínima del 80\% en módulos críticos.
+    \end{itemize}
+    
+    \item \textbf{Accesibilidad Universal (Responsive Design):} Garantizar usabilidad en todos los dispositivos:
+    \begin{itemize}
+        \item Interfaz adaptativa que funciona sin degradación en desktop, tablet y móvil (viewport desde 320px).
+        \item Tiempo de carga inicial $\leq$ 3 segundos en conexión 3G.
+        \item Compatibilidad con navegadores modernos (Chrome, Firefox, Safari, Edge versiones recientes).
+    \end{itemize}
+\end{itemize}
+
+\section{Estructura de la Memoria}
+El presente documento se organiza en los siguientes capítulos:
+
+\begin{itemize}
+    \item \textbf{Capítulo \ref{ch:dominio}: Dominio y Estado del Arte.} Analiza el contexto de los sistemas ERP actuales, identifica los tres perfiles de usuario (CEO, Gerente, Empleado) y realiza un estudio comparativo de las soluciones existentes en el mercado (ERPs monolíticos, plataformas RRHH, herramientas especializadas de turnos) para justificar la propuesta de valor diferencial del proyecto.
+    
+    \item \textbf{Capítulo \ref{ch:tecnologia}: Selección Tecnológica y Arquitectura.} Detalla la arquitectura de software diseñada (Cliente-Servidor) mediante diagrama conceptual, justifica la elección del stack tecnológico (PERN + TypeScript) con argumentación técnica de beneficios para escalabilidad, mantenibilidad y seguridad, y explica las decisiones sobre herramientas de soporte (git, testing frameworks, etc.).
+    
+    \item \textbf{Capítulo \ref{ch:funcionalidad}: Análisis Funcional y Subsistemas.} Desglosa en detalle las funcionalidades del sistema organizadas por perfiles de usuario, describiendo los tres subsistemas principales (Dirección, Gestión Local, Operativo), sus casos de uso críticos, pantallas asociadas y flujos de usuario, con énfasis en la experiencia responsiva.
+\end{itemize}

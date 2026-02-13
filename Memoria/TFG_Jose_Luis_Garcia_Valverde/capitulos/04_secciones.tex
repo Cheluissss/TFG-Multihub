@@ -1,0 +1,594 @@
+% ==========================================================
+% CAPÍTULO 4: ESPECIFICACIÓN FUNCIONAL
+% ==========================================================
+\chapter{Análisis Funcional y Subsistemas}
+\label{ch:funcionalidad}
+
+\section{Modelo de Datos}
+
+El núcleo del sistema se articula en torno a las siguientes entidades principales y sus relaciones:
+
+\begin{itemize}
+    \item \textbf{User:} Representa cada usuario del sistema. Campos: \texttt{id}, \texttt{email}, \texttt{role} (ADMIN/MANAGER/EMPLOYEE), \texttt{password\_hash}, \texttt{sede\_id} (referencia a sede asignada).
+    
+    \item \textbf{Sede:} Sucursal física de la organización. Campos: \texttt{id}, \texttt{nombre}, \texttt{ubicación}, \texttt{manager\_id} (FK User), \texttt{created\_at}.
+    
+    \item \textbf{Shift (Turno):} Período de trabajo asignado a un empleado. Campos: \texttt{id}, \texttt{employee\_id} (FK User), \texttt{sede\_id} (FK Sede), \texttt{start\_time}, \texttt{end\_time}, \texttt{status} (PENDING/CONFIRMED/CANCELLED), \texttt{date}.
+    
+    \item \textbf{ShiftRequest:} Solicitud de cambio de turno. Campos: \texttt{id}, \texttt{employee\_id}, \texttt{requested\_shift\_id}, \texttt{status} (PENDING/APPROVED/REJECTED), \texttt{requested\_at}, \texttt{response\_date}.
+    
+    \item \textbf{Product:} Artículo del catálogo de la sede. Campos: \texttt{id}, \texttt{sede\_id}, \texttt{nombre}, \texttt{precio}, \texttt{stock\_actual}, \texttt{stock\_minimo}.
+    
+    \item \textbf{Payroll:} Documento de nómina. Campos: \texttt{id}, \texttt{employee\_id}, \texttt{periodo\_mes}, \texttt{file\_url}, \texttt{uploaded\_at}.
+    
+    \item \textbf{Feedback:} Comentarios de empleados. Campos: \texttt{id}, \texttt{employee\_id}, \texttt{content}, \texttt{category} (BUG/SUGGESTION/COMPLAINT), \texttt{status} (OPEN/IN\_REVIEW/RESOLVED), \texttt{created\_at}.
+\end{itemize}
+
+% TODO: DIAGRAMA ENTIDAD-RELACIÓN
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.9\textwidth]{imagenes/erd_diagram.png}
+%     \caption{Diagrama Entidad-Relación: relaciones principales entre User, Sede, Shift, Product, Payroll, Feedback.}
+%     \label{fig:erd}
+% \end{figure}
+
+\section{Casos de Uso Principales}
+
+Esta sección enumera los casos de uso más críticos del sistema, estructurados por rol:
+
+\subsection*{CEO/Administrador}
+\begin{enumerate}
+    \item \textbf{UC1: Consultar Dashboard Ejecutivo:} CEO accede a resumen de KPIs (ventas global, ocupación plantilla por sede). Sistema filtra datos por período (hoy, semana, mes). Datos se actualizan en tiempo real vía WebSockets.
+    
+    \item \textbf{UC2: Dar de Alta Nueva Sede:} CEO rellena formulario (nombre, ubicación, manager asignado). Sistema valida que el manager no esté asignado a otra sede. Crea registro en DB y envía email de bienvenida al manager.
+    
+    \item \textbf{UC3: Revisar Feedback de Empleados:} CEO accede a tablero de feedback filtrable por sede, categoría, estado. Puede pasar de OPEN a IN\_REVIEW y luego RESOLVED.
+\end{enumerate}
+
+\subsection*{Gerente de Sede}
+\begin{enumerate}
+    \item \textbf{UC4: Asignar Turno a Empleado:} Gerente accede a calendario semanal. Selecciona empleado y fecha. Sistema valida que el empleado no tenga turno solapado. Asigna turno con estado PENDING (requiere confirmación de empleado vía app).
+    
+    \item \textbf{UC5: Gestionar Solicitud de Permuta:} Dos empleados intercambian turnos. Uno solicita (genera ShiftRequest). Gerente aprueba o rechaza. Si aprueba, los turnos se actualizan. Si rechaza, sigue en estado PENDING.
+    
+    \item \textbf{UC6: Crear Producto en Catálogo:} Gerente rellena formulario (nombre, precio, stock inicial). Sistema valida que nombre no sea duplicado en la sede. Genera product\_id autoincremental.
+    
+    \item \textbf{UC7: Ajustar Stock:} Gerente selecciona producto, incremente/decrementa cantidad. Sistema genera log de movimiento (auditoría). Si stock $<$ stock\_minimo, genera alerta visual.
+    
+    \item \textbf{UC8: Subir Nóminas:} Gerente selecciona período de mes y archivo PDF. Sistema valida que sea PDF. Vincula a employees por nombre/email. Notifica a empleado que su nómina está disponible.
+\end{enumerate}
+
+\subsection*{Empleado}
+\begin{enumerate}
+    \item \textbf{UC9: Consultar Próximo Turno:} Empleado abre dashboard. Sistema muestra próximo turno (fecha, hora, sede). Si turno en <24h, destaca en rojo.
+    
+    \item \textbf{UC10: Solicitar Cambio de Turno:} Empleado selecciona turno actual y turno deseado. Sistema valida disponibilidad del turno deseado. Crea ShiftRequest con status=PENDING. Notifica al gerente.
+    
+    \item \textbf{UC11: Ver Historial de Nóminas:} Empleado accede a sección ``Mis Nóminas''. Sistema lista todos los períodos con PDF descargable. Filtrable por año/mes.
+    
+    \item \textbf{UC12: Enviar Feedback:} Empleado rellena formulario con comentario, categoría (BUG/SUGGESTION/COMPLAINT). Sistema asigna status=OPEN y timestamp. Feedback viaja hacia CEO (visible en UC3).
+\end{enumerate}
+
+% TODO: DIAGRAMA DE CASOS DE USO UML
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.85\textwidth]{imagenes/use_case_diagram.png}
+%     \caption{Diagrama de casos de uso UML: actores (CEO, Manager, Employee) y relaciones con casos de uso principal del sistema.}
+%     \label{fig:use_cases}
+% \end{figure}
+
+\section{Definición de Perfiles y Privilegios}
+
+El sistema implementa un modelo de seguridad basado en roles (RBAC) jerárquico que garantiza el principio de mínimo privilegio: cada usuario accede únicamente a la información y funcionalidades estrictamente necesarias para el desempeño de su labor.
+
+A continuación, se detalla el alcance funcional y los subsistemas accesibles para cada uno de los tres roles definidos en la organización. Cabe destacar que \textbf{toda la interfaz ha sido diseñada para ser ``Responsive''}, permitiendo su uso fluido tanto en ordenadores de escritorio como en tablets y dispositivos móviles, adaptando la disposición de los elementos al tamaño de la pantalla disponible.
+
+\subsection{Subsistema de Dirección (Rol: CEO/Superadministrador)}
+
+Este perfil dispone de una visión panorámica y estratégica de la organización. Su funcionalidad está orientada a la supervisión y al análisis comparativo, sin necesidad de intervenir en la operativa diaria de cada local.
+
+\subsubsection{Dashboard Ejecutivo}
+
+Panel de control principal con métricas en tiempo real y accesos rápidos. Actualización automática cada 30 segundos via WebSockets (sin necesidad de refrescar).
+
+\begin{itemize}
+    \item \textbf{Sección de Rendimiento (Arriba izquierda):}
+    \begin{itemize}
+        \item Gráfica de líneas: Ingresos acumulados (global) vs. período anterior. Descargable como CSV/PNG.
+        \item Tabla comparativa de sedes: Ingresos, ocupación plantilla (\%), stock total. Filtrable y ordenable.
+        \item Top 5 productos más vendidos (gráfica de barras) y productos con bajo stock (alerta visual).
+    \end{itemize}
+    
+    \item \textbf{Sección de RRHH (Arriba derecha):}
+    \begin{itemize}
+        \item ``Headcount'': Total empleados activos vs. bajas (sick leave, vacation). Indicador de % de ocupación.
+        \item Tablero de ausencias: Qué empleados están de baja hoy (click para detalles).
+        \item Turnover rate: \% de rotación en últimos 12 meses.
+    \end{itemize}
+    
+    \item \textbf{Atajos de Gestión (Abajo):}
+    \begin{itemize}
+        \item Botón para crear nueva sede (modal form).
+        \item Listado de gerentes con contacto rápido (teléfono, email).
+    \end{itemize}
+\end{itemize}
+
+\textbf{Validaciones y Reglas:} Datos mostrados siempre corresponden a 24 horas atrás (lag de 1 día) para mantener consistencia. CEO solo ve datos de sedes donde tiene autorización.
+
+% TODO: MOCKUP DASHBOARD CEO
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.95\textwidth]{imagenes/mockup_ceo_dashboard.png}
+%     \caption{Mockup del Dashboard Ejecutivo: KPIs de rendimiento, RRHH y atajos de gestión. Diseño responsivo.}
+%     \label{fig:mockup_ceo}
+% \end{figure}
+
+\subsubsection{Gestión de Infraestructura (Sedes)}
+
+\textbf{Crear Nueva Sede:} Formulario con campos:
+\begin{itemize}
+    \item Nombre (requerido, máx 100 caracteres)
+    \item Ubicación/dirección (requerida, máx 200 caracteres)
+    \item Manager (dropdown de usuarios con rol MANAGER no asignados)
+    \item Teléfono de contacto (opcional, formato internacional)
+\end{itemize}
+
+\textbf{Validaciones:}
+\begin{itemize}
+    \item El manager seleccionado no debe estar ya asignado a otra sede.
+    \item Nombre de sede debe ser único dentro de la organización.
+    \item Teléfono se valida con librería \texttt{libphonenumber-js}.
+\end{itemize}
+
+Al crear, sistema genera email de notificación al manager con credenciales de acceso y link a primer login.
+
+\textbf{Editar/Ver Sedes:} Tabla con todas las sedes (2026 del año actual). Filtrable por nombre, manager. Expandible para ver detalles: empleados activos, productos, ventas del mes.
+
+\subsubsection{Auditoría de Feedback}
+
+Tablero consolidado de comentarios constructivos de empleados hacia CEO.
+
+\begin{itemize}
+    \item \textbf{Listado de Feedback:} Tabla con columnas: Empleado, Categoría (BUG/SUGGESTION/COMPLAINT), Estado (OPEN/IN\_REVIEW/RESOLVED), Fecha creación.
+    \item \textbf{Filtros:} Por sede, categoría, estado, rango de fechas.
+    \item \textbf{Detalles:} Click en fila abre modal con texto completo, posibilidad de cambiar estado.
+\end{itemize}
+
+\textbf{Estados y Transiciones:} OPEN → IN\_REVIEW (CEO marca como leído) → RESOLVED (CEO cierra después de accionar). Empleado notificado cuando su feedback pasa a RESOLVED.
+
+\subsection{Subsistema de Gestión Local (Rol: Gerente de Sede)}
+
+Es el perfil con mayor carga de interacción en el sistema. Gestiona los recursos humanos y materiales de \textbf{su ubicación asignada exclusivamente}. Todas las operaciones están filtradas por \texttt{sede\_id = gerente.sede\_id}.
+
+\subsubsection{Dashboard del Gerente}
+
+Panel operativo optimizado para decisiones rápidas.
+
+\begin{itemize}
+    \item \textbf{Resumen del Día Actual:}
+    \begin{itemize}
+        \item Empleados presentes hoy (foto, nombre, hora entrada esperada).
+        \item Alertas urgentes: bajas imprevistas, bajo stock crítico, solicitudes pendientes de aprobación.
+        \item Botones de acceso rápido: ``Asignar Turno'', ``Aprobar Permuta'', ``Crear Producto''.
+    \end{itemize}
+    
+    \item \textbf{Mini-gráficas:}
+    \begin{itemize}
+        \item Ocupación plantilla esta semana (\% promedio).
+        \item Stock total de productos (alerta si <20\% del mínimo).
+        \item Ingresos del mes (comparativa con mes anterior).
+    \end{itemize}
+\end{itemize}
+
+% TODO: MOCKUP DASHBOARD GERENTE
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.95\textwidth]{imagenes/mockup_manager_dashboard.png}
+%     \caption{Mockup Dashboard Gerente: resumen operativo del día, alertas y accesos rápidos a funciones más usadas.}
+%     \label{fig:mockup_manager}
+% \end{figure}
+
+\subsubsection{Gestión de Plantilla (CRUD Empleados)}
+
+\textbf{Alta de Empleado:} Formulario con campos:
+\begin{itemize}
+    \item Nombre completo, email, teléfono (requeridos)
+    \item Puesto (dropdown: Vendedor, Supervisor, Operario)
+    \item Horas contratadas/semana (requerido, rango 10-40)
+    \item Fecha de inicio (requerida, mín. hoy)
+\end{itemize}
+
+\textbf{Validaciones:}
+\begin{itemize}
+    \item Email debe ser único en la organización.
+    \item Horas contratadas entre 10 y 40 horas/semana.
+    \item Sistema genera \texttt{user\_id} autoincremental y contraseña temporal (enviada por email).
+\end{itemize}
+
+\textbf{Edición:} Permite cambiar puesto, horas contratadas. Cambios auditorados en log (quién, cuándo, qué cambió).
+
+\textbf{Baja/Inactivación:} Marca empleado como \texttt{status=INACTIVE}. Su sueldo deja de acumularse desde esa fecha. Turnos futuros se liberan.
+
+\subsubsection{Planificador y Gestión de Turnos}
+
+\textbf{Flujo de Asignación de Turno (UC4):}
+
+\begin{enumerate}
+    \item Gerente accede a vista de calendario semanal/mensual (drag-and-drop).
+    \item Selecciona un empleado y un día.
+    \item Especifica hora entrada y hora salida (ambas requeridas, no pueden ser iguales).
+    \item Sistema valida:
+    \begin{itemize}
+        \item Empleado está activo (status=ACTIVE).
+        \item No hay turno solapado (overlap detection): \texttt{(new.start < existing.end) AND (new.end > existing.start)}.
+        \item Turno no va más allá de horas contratadas/semana.
+    \end{itemize}
+    \item Si validaciones pasan: turno se crea con estado \texttt{status=PENDING}.
+    \item Empleado recibe notificación push/email: ``Nuevo turno asignado [fecha, horas]. Confírma tu asistencia''.
+\end{enumerate}
+
+\textbf{Estados de Turno:}
+\begin{itemize}
+    \item \texttt{PENDING}: Recién asignado, espera confirmación de empleado.
+    \item \texttt{CONFIRMED}: Empleado confirmó asistencia.
+    \item \texttt{WORKED}: Turno ya pasó (fechado en el pasado).
+    \item \texttt{CANCELLED}: Anulado (por gerente o empleado con causa).
+    \item \texttt{NO\_SHOW}: Empleado no se presentó sin justificación.
+\end{itemize}
+
+\textbf{Vista Diaria:} Tabla con turnos de hoy, mostrando: Empleado, Hora entrada/salida, Estado, Acciones (editar/cancelar si aún no confirmado).
+
+% TODO: FLOWCHART DE ASIGNACIÓN DE TURNO
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.7\textwidth]{imagenes/flowchart_shift_assignment.png}
+%     \caption{Flujo de validación y asignación de turno: detección de solapamientos, validación de horas, cambio de estado.}
+%     \label{fig:flowchart_shift}
+% \end{figure}
+
+\textbf{Solicitudes de Permuta (UC5):}
+
+Dos empleados quieren intercambiar turnos.
+
+\begin{enumerate}
+    \item Empleado A solicita permuta desde su app: selecciona su turno (T1) y propone intercambiar con turno de B (T2).
+    \item Sistema valida: B no tiene conflicto si toma T1. A no tiene conflicto si toma T2.
+    \item Crea \texttt{ShiftRequest} con \texttt{status=PENDING}.
+    \item Gerente ve en ``Centro de Notificaciones'' solicitud de permuta. Puede:
+    \begin{itemize}
+        \item \textbf{Aprobar:} Turnos se intercambian. Ambos empleados notificados.
+        \item \textbf{Rechazar:} ShiftRequest.status = REJECTED. Empleados notificados.
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Centro de Notificaciones:} Panel desplegable con:
+\begin{itemize}
+    \item Solicitudes de permutas pendientes (con avatares de empleados).
+    \item Solicitudes de baja/permiso (si implementado).
+    \item Alertas de operación (ej: empleado confirmó ausencia, nuevo empleado dado de alta).
+\end{itemize}
+
+\subsubsection{Gestión de Catálogo e Inventario}
+
+\textbf{CRUD de Productos (UC6):}
+
+Crear: Formulario con Nombre, Descripción (opcional), Precio venta, Cantidad inicial. Sistema valida nombre único por sede. Genera \texttt{product\_id}.
+
+Editar: Permite cambiar precio y descripción. Cambios se auditorean.
+
+Eliminar: Marca \texttt{status=DELETED} (soft delete). No aparece en catálogo pero se preserva en histórico de ventas.
+
+% TODO: MOCKUP CATÁLOGO PRODUCTOS
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.85\textwidth]{imagenes/mockup_catalog.png}
+%     \caption{Mockup sección de Catálogo: tabla de productos con precios, stock, acciones (edit/delete).}
+%     \label{fig:mockup_catalog}
+% \end{figure}
+
+\textbf{Control de Stock (UC7):}
+
+\begin{itemize}
+    \item \textbf{Ajuste Manual:} Gerente selecciona producto, ingresa cantidad a ajustar (+ o -). Sistema genera log: \texttt{Ajuste: [producto], [cantidad], [motivo], [usuario], [timestamp]}.
+    
+    \item \textbf{Alertas de Stock:} Si \texttt{stock\_actual < stock\_minimo}, icono de alerta en rojo en dashboard. Gerente puede reordenar (funcionalidad futura de integración POS).
+    
+    \item \textbf{Inventario:} Opción ``Realizar Inventario'': Gerente cuenta productos físicos y ajusta cantidades en sistema (puede tomar foto como comprobante).
+\end{itemize}
+
+\textbf{Validaciones:}
+\begin{itemize}
+    \item Stock nunca puede ser negativo.
+    \item Ajustes requieren motivo (selección de lista dropdown: Venta, Rotura, Aportación, Corrección, etc.).
+\end{itemize}
+
+\subsubsection{Gestión Documental (Nóminas)}
+
+\textbf{Subida de Nóminas (UC8):}
+
+\begin{enumerate}
+    \item Gerente accede a sección ``Nóminas''.
+    \item Selecciona período (mes/año de dropdown).
+    \item Sube archivo PDF. Sistema valida:
+    \begin{itemize}
+        \item Es PDF (no otra extensión).
+        \item Tamaño <10MB.
+    \end{itemize}
+    \item Gerente selecciona de dropdown qué empleado es destinatario (o sube múltiples nóminas a la vez con asignación automática por nombre).
+    \item Sistema crea registro \texttt{Payroll} e inmediatamente notifica al empleado: ``Tu nómina de [mes] está disponible''.
+\end{enumerate}
+
+\textbf{Auditoría:} Cada PDF se almacena encriptado (AES-256) en almacenamiento seguro. Acceso se loguea.
+
+\subsection{Subsistema Operativo (Rol: Empleado)}
+
+Diseñado con una interfaz simplificada y \textit{Mobile-First}, este perfil actúa como un consumidor de información y emisor de feedback. Todas las pantallas se cargan en <2 segundos en conexión 3G.
+
+\subsubsection{Dashboard del Empleado}
+
+Pantalla inicial (home screen) personalizada para cada empleado.
+
+\begin{itemize}
+    \item \textbf{Tarjeta de Próximo Turno (Destacada):}
+    \begin{itemize}
+        \item Fecha, hora entrada/salida de turno más próximo.
+        \item Si turno es hoy: botón ``Confirmar Asistencia'' (debe presionarlo antes del turno).
+        \item Si turno es en <24h: se destaca en amarillo. Si es en <1h: en rojo.
+        \item Botón ``+ Info'': detalles de ubicación sede, contacto gerente.
+    \end{itemize}
+    
+    \item \textbf{Notificaciones Relevantes:}
+    \begin{itemize}
+        \item Nuevo turno asignado (gerente lo acaba de crear).
+        \item Permuta aprobada/rechazada.
+        \item Nueva nómina disponible.
+    \end{itemize}
+    
+    \item \textbf{Acceso Rápido:}
+    \begin{itemize}
+        \item Botón a ``Mis Turnos'' (calendario).
+        \item Botón a ``Mis Nóminas''.
+        \item Botón a ``Enviar Feedback''.
+    \end{itemize}
+\end{itemize}
+
+% TODO: MOCKUP DASHBOARD EMPLEADO MÓVIL
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.5\textwidth]{imagenes/mockup_employee_dashboard_mobile.png}
+%     \caption{Mockup Dashboard Empleado (móvil): próximo turno, notificaciones, accesos rápidos. Optimizado para pantalla pequeña.}
+%     \label{fig:mockup_employee}
+% \end{figure}
+
+\subsubsection{Calendario y Turnos}
+
+\textbf{Vistas de Calendario (UC9):}
+
+\begin{itemize}
+    \item \textbf{Vista Semanal (default):} Grilla con 7 días. Cada celda muestra turno (si existe) con hora. Color verde = CONFIRMED, amarillo = PENDING, gris = WORKED (pasado).
+    
+    \item \textbf{Vista Mensual:} Calendario clásico. Cada día con pequeño indicador (punto) si tiene turno. Click en día expande para ver detalles.
+    
+    \item \textbf{Filtros:} Sede (si aplica), estado de turno.
+\end{itemize}
+
+\textbf{Solicitud de Cambio de Turno (UC10):}
+
+Flujo de permuta desde perspectiva de empleado:
+
+\begin{enumerate}
+    \item Empleado selecciona su turno (T1) desde calendario. Aparece botón ``Solicitar Permuta''.
+    \item Ventana emerge permitiendo seleccionar turno de otro compañero (T2). Sistema muestra solo turnos de compañeros disponibles ese día (búsqueda filtrada).
+    \item Empleado confirma. Sistema valida que ambos turnos sean compatibles.
+    \item \texttt{ShiftRequest} se crea con \texttt{status=PENDING}. Aparece en notificaciones de empleado como ``En Espera de Aprobación''.
+    \item Mientras solicitud esté pending, no puede refundir new requests (evita spam).
+    \item Cuando gerente aprueba/rechaza, empleado recibe notificación push inmediata.
+\end{enumerate}
+
+\subsubsection{Mis Nóminas}
+
+\textbf{Visualización y Descarga (UC11):}
+
+\begin{itemize}
+    \item \textbf{Listado de Nóminas:} Tabla con columnas: Período (Ej: ``Enero 2026''), Fecha disponible, Acciones (Descargar).
+    \item \textbf{Filtro por Año:} Dropdown para cambiar año y ver histórico completo.
+    \item \textbf{Descargar:} Click en botón descarga PDF (encriptado en almacenamiento, se descifra al descargar).
+    \item \textbf{Seguridad:} Empleado SOLO ve sus propias nóminas. Queryse filtra por \texttt{user\_id = logged\_user.id}.
+\end{itemize}
+
+\subsubsection{Sistema de Feedback}
+
+\textbf{Envío de Feedback (UC12):}
+
+\begin{itemize}
+    \item \textbf{Formulario:} Campos:
+    \begin{itemize}
+        \item ``¿De qué es tu comentario?'' (radio button): BUG / SUGGESTION / COMPLAINT.
+        \item ``Tu mensaje'' (textarea, máx 500 caracteres).
+    \end{itemize}
+    
+    \item \textbf{Validaciones:}
+    \begin{itemize}
+        \item Mensaje no puede estar vacío.
+        \item Máximo 3 feedbacks por día (throttling para evitar spam).
+    \end{itemize}
+    
+    \item \textbf{Al Enviar:}
+    \begin{itemize}
+        \item Sistema crea registro \texttt{Feedback} con \texttt{status=OPEN}.
+        \item Toast de confirmación: ``Gracias por tu feedback. Lo recibirá nuestro equipo''.
+        \item CEO lo ve en su tablero de Auditoría (UC3).
+    \end{itemize}
+\end{itemize}
+
+% TODO: MOCKUP FORMULARIO FEEDBACK
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.55\textwidth]{imagenes/mockup_feedback_form.png}
+%     \caption{Mockup Formulario de Feedback: simple, mobile-friendly, claro.}
+%     \label{fig:mockup_feedback}
+% \end{figure}
+
+\section{Sistema de Notificaciones y Alertas}
+
+Las notificaciones son críticas para mantener usuarios informados en tiempo real.
+
+\subsection*{Canales de Notificación}
+
+\begin{itemize}
+    \item \textbf{Push Notifications (In-App):} Aparecen en esquina superior de pantalla. Auto-desaparecen en 5 segundos. Click lleva a pantalla relevante.
+    
+    \item \textbf{Email:} Eventos importantes (nuevo turno, permuta rechazada, nómina disponible). Enviados vía servicio SMTP (SendGrid o similar). \textbf{No spam}: máximo 1 email por día por tipo de evento.
+    
+    \item \textbf{En-App Badge:} Ícono de campana con contador (ej: ``3 notificaciones nuevas'').
+\end{itemize}
+
+\subsection*{Eventos que Generan Notificaciones}
+
+\begin{table}[h]
+    \centering
+    \caption{Matriz de notificaciones: qué rol recibe qué evento por qué canal}
+    \label{tab:notifications}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l X}
+        \toprule
+        \textbf{Evento} & \textbf{Rol} & \textbf{Canales} \\
+        \midrule
+        Nuevo turno asignado & Empleado & Push + Email \\
+        Turno confirmado/rechazado & Gerente & Push \\
+        Solicitud de permuta recibida & Gerente & Push \\
+        Permuta aprobada/rechazada & Empleado & Push + Email \\
+        Nómina disponible & Empleado & Push + Email \\
+        Nuevo feedback recibido & CEO & Push \\
+        Stock bajo crítico & Gerente & Push \\
+        Nueva sede creada & Gerente (assigned) & Email \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\section{Flujos de Navegación y Menú}
+
+Cada rol dispone de un menú lateral (en desktop) o hamburguesa (en móvil) con secciones accesibles.
+
+\subsection*{CEO}
+\begin{itemize}
+    \item Dashboard Ejecutivo
+    \item Gestión de Sedes
+    \item Auditoría de Feedback
+    \item Configuración (cambiar contraseña, idioma, zona horaria)
+    \item Logout
+\end{itemize}
+
+\subsection*{Gerente}
+\begin{itemize}
+    \item Dashboard Operativo
+    \item Planificador de Turnos
+    \item Gestión de Empleados
+    \item Catálogo e Inventario
+    \item Nóminas
+    \item Centro de Notificaciones
+    \item Mi Perfil
+    \item Logout
+\end{itemize}
+
+\subsection*{Empleado}
+\begin{itemize}
+    \item Mis Turnos (Calendario)
+    \item Mis Nóminas
+    \item Enviar Feedback
+    \item Mi Perfil (editar teléfono, email, contraseña)
+    \item Logout
+\end{itemize}
+
+\section{Integraciones y Sincronización en Tiempo Real}
+
+\subsection*{Sincronización de Datos Entre Capas}
+
+Las operaciones críticas emplean \textbf{transacciones ACID} en PostgreSQL para garantizar consistencia:
+
+\begin{itemize}
+    \item \textbf{Al asignar turno:} En una única transacción se actualiza \texttt{Shift.status}, se decrementa horas disponibles del empleado, se incrementa una columna de auditoría. Si falla cualquier paso, ROLLBACK.
+    
+    \item \textbf{Al aprobar permuta:} Transacción que intercambia IDs de \texttt{shift.employee\_id} de ambos turnos de forma atómica. Imposible que quede estado inconsistente.
+\end{itemize}
+
+\subsection*{Actualizaciones en Tiempo Real para CEO}
+
+El Dashboard Ejecutivo se actualiza automáticamente sin que CEO necesite refrescar:
+
+\begin{itemize}
+    \item Backend emite eventos vía WebSocket cuando cambian datos relevantes: nuevo turno creado, nómina subida, feedback enviado.
+    \item Frontend mantiene conexión WebSocket abierta. Al recibir evento, actualiza gráficas y tablas (sin molestar si CEO está interactuando).
+    \item Fallback: Si WebSocket se cae, frontend hace polling cada 30 segundos.
+\end{itemize}
+
+\section{Privacidad y Consideraciones de Seguridad}
+
+\subsection*{Filtrado de Datos}
+
+\textbf{Principio:} Cada usuario SOLO ve datos según su rol:
+
+\begin{itemize}
+    \item \textbf{Empleado:} Ve solo sus propios turnos, su nómina, su feedback.
+    \item \textbf{Gerente:} Ve empleados, turnos, inventario de su sede solamente. No ve datos de otras sedes.
+    \item \textbf{CEO:} Ve agregados (suma, promedio) pero no datos individuales (ej: no ve nombre de empleado en turno, solo código employeeID si necesario).
+\end{itemize}
+
+\textbf{Implementación:} Middleware Express valida cada query: \texttt{WHERE sede\_id = user.sede\_id OR user.role = ADMIN}. Queries SQL parameterizadas previenen inyecciones.
+
+\subsection*{Protección de Datos Sensibles}
+
+\begin{itemize}
+    \item \textbf{Nóminas:} PDFs encriptados (AES-256) en almacenamiento. Descifrado solo en lado cliente, nunca transmitido en claro.
+    \item \textbf{Contraseñas:} Hasheadas con bcrypt (10 rounds). No se almacena ni se recupera texto plano.
+    \item \textbf{Datos de contacto (email/teléfono):} Accesibles solo a roles autorizados (gerente ve teléfono de sus empleados, CEO no).
+    \item \textbf{HTTPS obligatorio:} Todas las comunicaciones con TLS 1.2+. HSTS header configurado.
+\end{itemize}
+
+\subsection*{Auditoría}
+
+Operaciones críticas se registran en tabla \texttt{AuditLog}:
+
+\begin{itemize}
+    \item Quién (user\_id), Qué (operación), Cuándo (timestamp), Dónde (tabla afectada).
+    \item Ejemplos: ``Manager user\_42 creó turno para employee\_15, 2026-02-09 10:30'', ``emp\_18 descaró nómina enero, 2026-02-09 14:45''.
+    \item Acceso a auditlog restringido a CEO (solo para su sede).
+\end{itemize}
+
+\section{Testing de Funcionalidades Críticas}
+
+La especificación funcional anterior debe validarse mediante tests:
+
+\subsection*{Unit Tests Recomendados}
+\begin{itemize}
+    \item Validación de overlap de turnos (función pura).
+    \item Cálculo de horas totales/semana.
+    \item Reglas de permisos RBAC.
+\end{itemize}
+
+\subsection*{Integration Tests Recomendados}
+\begin{itemize}
+    \item Flujo completo asignación turno: crear → validar → guardar → notificar.
+    \item Flujo aprobación permuta: ambos turnos intercambian correctamente.
+    \item Subida nómina: archivo guardado, empleado notificado, accesible en app.
+\end{itemize}
+
+\subsection*{E2E Tests Recomendados}
+\begin{itemize}
+    \item CEO login → ver dashboard → crear sede → verificar aparece.
+    \item Gerente login → asignar turno → empleado ve notificación.
+    \item Empleado solicita permuta → gerente aprueba → ambos ven cambios.
+\end{itemize}
+
+\section{Consideraciones para Futuras Extensiones}
+
+El diseño modular permite agregar funcionalidades sin afectar lo existente:
+
+\begin{itemize}
+    \item \textbf{Sistema de Calificaciones:} CEO y Gerentes puntúan empleados (1-5 estrellas). Permite reestructuración de equipos.
+    \item \textbf{Integración POS:} Conectar con caja registradora para registrar ventas automáticamente (hoy es manual).
+    \item \textbf{Horas Extras y Suplementos:} Cálculos de compensación si turno excede horas contratadas.
+    \item \textbf{Roles Adicionales:} Supervisor, Coordinador (entre Manager y CEO).
+    \item \textbf{Aplicación Móvil Nativa:} Mismo backend API, cliente iOS/Android con React Native.
+    \item \textbf{Integración HR Compliance:} Conectar con software de recursos humanos (Factorial, BizMérida) para sincronizar empleados.
+\end{itemize}

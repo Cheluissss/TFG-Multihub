@@ -1,0 +1,131 @@
+\chapter{Dominio y Estado del Arte}
+\label{ch:dominio}
+
+\section{Dominio de la Aplicación}
+
+El sistema desarrollado se enmarca en el dominio de los \textbf{Sistemas de Planificación de Recursos Empresariales (ERP)} de nueva generación. Específicamente, el proyecto se posiciona como una solución \textbf{SaaS (Software as a Service)} vertical, especializada en la gestión integral de \textbf{Recursos Humanos (RRHH)} y la orquestación de \textbf{Operaciones Multi-Sede} para el sector retail y servicios.
+
+\subsection*{Contexto de Mercado}
+
+El mercado de soluciones ERP está en un momento de transición significativa. Aunque los grandes sistemas monolíticos (SAP, Oracle) mantienen presencia en grandes corporaciones, existe una tendencia emergente hacia soluciones SaaS modulares que democratizan el acceso a la tecnología empresarial. En 2026, el mercado de software de gestión para PYMEs evidencia demanda creciente por:
+
+\begin{itemize}
+    \item \textbf{Modularidad y flexibilidad:} Las empresas medianas requieren soluciones que se adapten a su operativa, no al revés.
+    \item \textbf{Experiencia móvil nativa:} Con más del 60\% de la fuerza laboral en retail sin puesto fijo, el acceso móvil es ya requisito fundamental.
+    \item \textbf{Integración seamless:} Conectar con sistemas legacy sin implementaciones costosas.
+    \item \textbf{Costos predecibles:} Modelo SaaS con precios mensuales, no licencias perpetuas de seis cifras.
+\end{itemize}
+
+\subsection{Roles y Flujos de Usuario}
+
+La arquitectura de información y la lógica de negocio del sistema se articulan en torno a tres perfiles de usuario jerarquizados, diseñados para cubrir las necesidades estratégicas, tácticas y operativas de la organización:
+
+\begin{enumerate}
+    \item \textbf{CEO (Nivel Estratégico):} Requiere una visión holística del negocio. Su interacción se centra en cuadros de mando (\textit{dashboards}) agregados que permiten el análisis comparativo de rendimiento entre sedes y el control macroeconómico de la estructura organizacional. \textit{Caso de uso:} El lunes a las 9:00 AM, el CEO accede desde su móvil a un resumen ejecutivo: ventas consolidadas del fin de semana (+12\% respecto a la semana anterior), ocupación de plantilla (95\%), y alertas de inventario crítico. En segundos, identifica que Madrid con 89\% de ocupación requiere atención.
+    
+    \item \textbf{Gerente de Sede (Nivel Táctico-Operativo):} Es el responsable de la ejecución eficiente en su ubicación específica. Su flujo de trabajo prioriza la agilidad administrativa en la gestión de turnos, resolución de incidencias y control de inventario local. \textit{Caso de uso:} El martes, una llamada de baja de último minuto afecta al turno de tarde. El gerente abre la aplicación desde el mostrador, visualiza empleados disponibles en el calendario, asigna un sustituto en 90 segundos, genera automáticamente la notificación al empleado, y el sistema ajusta el cálculo de horas extra si procede.
+    
+    \item \textbf{Empleado (Nivel Operativo):} Constituye el grueso de la fuerza laboral. Utiliza la plataforma principalmente en dispositivos móviles como portal de autogestión. \textit{Caso de uso:} Una vendedora necesita cambiar su turno del próximo jueves. Desde su móvil, visualiza qué compañeros están disponibles, selecciona una permuta, solicita aprobación, y en 2 horas recibe confirmación del gerente. También descarga su nómina mensual desde el mismo app.
+\end{enumerate}
+
+% TODO: DIAGRAMA DE ROLES Y NIVELES
+% Descomentar cuando tengas el diagrama
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.6\textwidth]{imagenes/roles_piramide.png}
+%     \caption{Pirámide de roles: Nivel estratégico (CEO), táctico (Gerente), operativo (Empleado). Cada nivel requiere diferente granularidad de datos.}
+%     \label{fig:roles_pyramid}
+% \end{figure}
+%
+% NOTA: Esta imagen podría ser un diagrama Mermaid o dibujado en PowerPoint mostrando:
+% - Triángulo con CEO arriba, Gerente a medio, Empleados abajo
+% - Flechas de comunicación vertical (feedback)
+% - % de tiempo de uso de la plataforma
+% ========================================================
+
+\section{Estado del Arte y Análisis de la Competencia}
+El estudio del estado del arte examina las soluciones de gestión empresarial vigentes en el mercado, contrastando los grandes sistemas ERP monolíticos tradicionales frente a las soluciones verticales modernas y plataformas de nicho.
+
+\subsection{Análisis de Soluciones Existentes (2026)}
+
+Para identificar oportunidades de mejora, se ha realizado un análisis comparativo de diversas herramientas vigentes en el mercado actual, categorizadas según su aproximación al problema. La Tabla \ref{tab:comparativa} resume este estudio considerando coste, experiencia móvil y limitaciones funcionales detectadas.
+
+\begin{table}[h]
+    \centering
+    \caption{Comparativa de soluciones existentes: análisis de brechas y costos aproximados (2026)}
+    \label{tab:comparativa}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l l c X}
+        \toprule
+        \textbf{Solución} & \textbf{Coste/año} & \textbf{Móvil} & \textbf{Limitaciones fundamentales} \\
+        \midrule
+        \textbf{SAP B1, Dynamics 365} & \$40K-80K & ⚠️ & Prohibitivos para PYMEs. Rigidez estructural. Meses de curva de aprendizaje. No diseñados para retail multi-sede. \\
+        \addlinespace
+        \textbf{Factorial, Workday, Bizneo} & \$1-3/emp/mes & ✓ & Excelentes en RRHH administrativo, pero inventario y turnos complejos son secundarios. Gestión multi-sede débil. \\
+        \addlinespace
+        \textbf{Sesame HR, Combo, HRLOG} & \$500-2K/mes & ⚠️ & Especializados en turnos pero generan silos de información. Datos operativos no se integran con KPIs de negocio. Sin dashboard de dirección. \\
+        \addlinespace
+        \textbf{Square, Toast (POS+RRHH)} & \$300-1.5K/mes & ✓ & Fuertes en POS y ventas, débiles en planificación de RRHH multi-sede y gestión centralizada. \\
+        \addlinespace
+        \textbf{\textbf{Solución Propuesta (TFG)}} & \textbf{SaaS flexible} & \textbf{✓✓} & \textbf{Integra todo lo anterior: RRHH + Operativa + Dashboard CEO. Móvil nativo. Bajo coste. Flexible.} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+% ==========================================================
+% TODO: IMÁGENES DEL ESTADO DEL ARTE
+% ==========================================================
+% Descomentar y completar cuando tengas acceso a screenshots
+% 
+% Imagen 1: Dashboard de Workday (RRHH estándar)
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.85\textwidth]{imagenes/workday_dashboard.png}
+%     \caption{Interfaz típica de Workday: gestión RRHH centralizada pero compleja para operativa multi-sede.}
+%     \label{fig:workday_example}
+% \end{figure}
+% 
+% Imagen 2: Calendario de turnos Sesame HR (especializado pero aislado)
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.85\textwidth]{imagenes/sesame_turnos.png}
+%     \caption{Interfaz de Sesame HR: excelente para gestión de turnos, pero sin integración con KPIs de negocio o visión multi-sede.}
+%     \label{fig:sesame_example}
+% \end{figure}
+% 
+% Imagen 3: Dashboard retail Square/Toast (híbrido POS+RRHH)
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.85\textwidth]{imagenes/square_dashboard.png}
+%     \caption{Interfaz de Square: fuerte en POS y ventas, pero débil en planificación de RRHH centralizada.}
+%     \label{fig:square_example}
+% \end{figure}
+%
+% FUENTES SUGERIDAS PARA OBTENER SCREENSHOTS:
+% - Workday: https://www.workday.com/en-US/products/resource-management/demo.html
+% - Sesame HR: https://www.sesame.com/en/screenshots (sección demo)
+% - Square for Restaurants/Toast: https://squareup.com/en-us/point-of-sale/restaurant (galería de imágenes)
+% ==========================================================
+
+\subsection{Propuesta de Valor Única (PVU)
+
+Como respuesta a las carencias identificadas en el mercado, el sistema propuesto define su propuesta de valor en la \textbf{democratización de la gestión multi-sede eficiente} mediante una plataforma integrada diseñada específicamente para retail y servicios. Los pilares diferenciadores son:
+
+\begin{enumerate}
+    \item \textbf{Segregación Contextual por Rol (``Right-Sizing Complexity''):} A diferencia de los ERPs genéricos que abruman con opciones, la interfaz adapta dinámicamente lo que cada usuario ve. El CEO ve KPIs y alertas estratégicas; el gerente ve tablas de turnos y stock; el empleado ve su próximo turno y nómina. \textit{Ejemplo:} Un CEO accede a la misma plataforma que sus 200 empleados, pero ve un 5\% de las funcionalidades disponibles—exactamente lo que necesita. Esto mejora significativamente la adopción respecto a sistemas genéricos.
+    
+    \item \textbf{Accesibilidad Ubicua (Mobile-First, Verdaderamente):} A diferencia de otras plataformas con ``responsive design'' que simulan móvil, esta es nativa mobile-first desde su arquitectura. Funciona perfectamente en conexiones lentas (3G), sin dependencia de JavaScript pesado, con sincronización automática cuando se recupera la conectividad. \textit{Ejemplo:} Un empleado en la calle con 2 barras de señal puede solicitar una permuta, descargar su nómina, y ver cambios de turno sin esperar.
+    
+    \item \textbf{Unificación de Datos en Tiempo Real:} A diferencia de herramientas especializadas que generan silos, todos los datos (turnos, ventas, inventario, RRHH) convergen en una única base de datos. Cuando un turno se modifica, el cálculo de horas actualiza dinámicamente el coste de nómina estimado; cuando un empleado falta, el dashboard del CEO lo refleja al instante en las métricas de rendimiento. \textit{Ejemplo:} No existen hojas de cálculo desactualizadas—el sistema es la ``fuente única de verdad''.
+    
+    \item \textbf{Comunicación Vertical Integrada:} Implementa un canal de feedback estructurado que conecta operativamente la base (``pie de tienda'') con la dirección. Un empleado reporta un problema de stock o clima laboral, el gerente lo clasifica, y el CEO lo ve en un tablero de incidencias. Elimina intermediarios y agiliza decisiones.
+\end{enumerate}
+
+\subsection*{Diferencial Tecnológico}
+
+Desde una perspectiva técnica, la solución aprovecha las tendencias tecnológicas de 2026:
+\begin{itemize}
+    \item \textbf{Stack moderno open-source:} Utiliza PERN + TypeScript, tecnologías ampliamente adoptadas con gran comunidad. Esto asegura que el código sea mantenible, escalable y sin ``vendor lock-in''.
+    \item \textbf{API RESTful de primera clase:} Diseñada para permitir integraciones futuras (POS, ERP legacy, BI tools) sin refactorización.
+    \item \textbf{Seguridad granular (RBAC):} Control de acceso basado en roles con auditoría, cumpliendo regulaciones de datos sensibles (nóminas).
+\end{itemize}

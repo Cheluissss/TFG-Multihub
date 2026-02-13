@@ -1,0 +1,223 @@
+% ==========================================================
+% CAPÍTULO 3: SELECCIÓN TECNOLÓGICA
+% ==========================================================
+\chapter{Selección Tecnológica y Arquitectura}
+\label{ch:tecnologia}
+
+\section{Arquitectura del Sistema}
+
+Para satisfacer los requisitos no funcionales de interactividad, inmediatez y escalabilidad, se ha diseñado una arquitectura basada en \textbf{Componentes} y fuertemente desacoplada. La solución sigue el patrón de separación de responsabilidades entre el \textit{Frontend} (Cliente) y el \textit{Backend} (Servidor), estableciendo la comunicación a través de una API RESTful estandarizada.
+
+Esta separación arquitectónica ofrece múltiples ventajas:
+
+\begin{itemize}
+    \item \textbf{Claridad de responsabilidades:} Frontend gestiona UI/UX y estado local; Backend maneja lógica de negocio y persistencia.
+    \item \textbf{Mantenibilidad mejorada:} Cambios en una capa no requieren refactorización de la otra, facilitando el desarrollo iterativo individual.
+    \item \textbf{Testabilidad:} Cada capa puede ser testeada independientemente (unitarios, integración, E2E).
+    \item \textbf{Escalabilidad futura:} Permite integración de nuevos clientes (aplicación móvil nativa, dashboards BI, integraciones POS) sin modificar la lógica de negocio central.
+\end{itemize}
+
+\subsection*{Flujo de Datos}
+
+El flujo de comunicación entre capas es bidireccional y asíncrono:
+
+\begin{enumerate}
+    \item \textbf{Frontend (React):} Usuario interactúa con la UI. JavaScript captura eventos, valida inputs localmente con Zod, y prepara peticiones HTTP.
+    \item \textbf{API REST (Express):} Recibe petición, valida esquema de nuevo con Zod, ejecuta lógica de negocio, consulta/actualiza datos en PostgreSQL vía Prisma.
+    \item \textbf{Base de Datos (PostgreSQL):} Persiste datos con garantías ACID. Prisma genera SQL optimizado automáticamente.
+    \item \textbf{Respuesta al Cliente:} JSON tipado se serializa y transmite al frontend. TanStack Query gestiona caché inteligentemente.
+\end{enumerate}
+
+\begin{figure}[h]
+    \centering
+    % Asegúrate de actualizar la imagen si el diagrama cambia, aunque la arquitectura base es la misma.
+    \includegraphics[width=0.8\textwidth]{imagenes/React Client Architecture-2025-12-09-180737.png}
+    \caption{Diagrama de alto nivel de la arquitectura Cliente-Servidor propuesta.}
+    \label{fig:arquitectura}
+\end{figure}
+
+\section{Stack Tecnológico (PERN + TypeScript)}
+
+La pila tecnológica seleccionada para la implementación se conoce en la industria como \textbf{PERN Stack} (PostgreSQL, Express, React, Node.js). Adicionalmente, se ha incorporado \textbf{TypeScript} de manera transversal en todo el proyecto para garantizar la seguridad de tipos y robustez del código.
+
+A continuación, se detalla y justifica la elección de cada tecnología, contrastándola con alternativas descartadas.
+
+\subsection{Frontend: Interfaz de Usuario}
+El desarrollo de la interfaz de usuario prioriza la experiencia ``Mobile-First'' y la reactividad.
+
+\begin{itemize}
+    \item \textbf{React.js:} Biblioteca de JavaScript para la construcción de interfaces.
+    \\ \textit{Justificación:} Su modelo basado en componentes reutilizables es ideal para construir elementos complejos de la UI, como el ``Calendario de Turnos'', permitiendo encapsular lógica y estilo de forma modular.
+
+    \item \textbf{Vite:} Entorno de desarrollo y herramienta de construcción (bundler).
+    \\ \textit{Justificación:} Seleccionado por su rendimiento superior frente a alternativas como Webpack. Vite ofrece tiempos de arranque del servidor de desarrollo casi instantáneos gracias al uso de módulos ES nativos, lo que agiliza significativamente el ciclo de iteración y desarrollo.
+    
+    \item \textbf{TanStack Query (React Query):} Gestor de estado asíncrono.
+    \\ \textit{Justificación:} Fundamental para separar el estado del cliente del estado del servidor. Simplifica drásticamente la gestión de caché, reintentos automáticos y sincronización de datos en tiempo real, vital para mantener vistas críticas (como turnos y horarios) siempre actualizadas.
+
+    \item \textbf{Tailwind CSS:} Framework de utilidades CSS.
+    \\ \textit{Justificación:} Permite un desarrollo rápido de interfaces responsivas y consistentes. Su enfoque ``utility-first'' facilita la implementación de diseños adaptativos (responsive) sin salir del HTML/JSX, asegurando coherencia visual en toda la aplicación.
+
+    \item \textbf{Day.js:} Librería de manipulación de fechas.
+    \\ \textit{Justificación:} Dada la centralidad de la gestión temporal en el sistema (turnos, horas, contratos), se requiere una librería inmutable y extremadamente ligera (2kB). Day.js ofrece una API compatible con Moment.js pero con un peso y rendimiento muy superiores.
+\end{itemize}
+
+\subsection{Backend: Lógica de Negocio y API}
+El servidor actúa como orquestador de la lógica de negocio, seguridad y acceso a datos.
+
+\begin{itemize}
+    \item \textbf{Node.js y Express.js:} Entorno de ejecución y framework web minimalista.
+    \\ \textit{Justificación:} El modelo de E/S no bloqueante de Node.js es altamente eficiente para aplicaciones intensivas en E/S (I/O heavy), como esta API REST. Express proporciona la estructura mínima necesaria para el enrutamiento y gestión de middleware sin imponer convenciones rígidas.
+
+    \item \textbf{Zod:} Librería de validación de esquemas (Schema Validation).
+    \\ \textit{Justificación:} Garantiza la integridad de los datos en tiempo de ejecución. Al integrarse con TypeScript, permite inferir tipos estáticos directamente de los esquemas de validación, asegurando que los datos recibidos por la API cumplan estrictamente con el formato esperado antes de ser procesados.
+
+    \item \textbf{JWT (JSON Web Tokens):} Estándar de autenticación.
+    \\ \textit{Justificación:} Proporciona un mecanismo de autenticación ``stateless'' (sin estado), lo que facilita la escalabilidad horizontal del servidor. Permite transmitir la identidad y los roles del usuario de forma segura en cada petición HTTP.
+\end{itemize}
+
+\subsection{Persistencia de Datos}
+\begin{itemize}
+    \item \textbf{PostgreSQL:} Sistema de gestión de bases de datos relacional (RDBMS).
+    \\ \textit{Justificación:} Su robustez, cumplimiento de ACID y soporte para consultas complejas lo convierten en la opción estándar para sistemas empresariales donde la integridad de los datos (nóminas, contratos) es crítica.
+
+    \item \textbf{Prisma ORM:} Herramienta de Mapeo Objeto-Relacional.
+    \\ \textit{Justificación:} Abstrae la complejidad de las consultas SQL directas y proporciona seguridad de tipos de extremo a extremo (End-to-End Type Safety). Esto permite detectar errores en las consultas a la base de datos en tiempo de compilación, en lugar de en tiempo de ejecución.
+\end{itemize}
+
+\subsection{Herramientas de Soporte}
+
+\begin{itemize}
+    \item \textbf{Git y GitHub:} Control de versiones distribuido.
+    \\ \textit{Justificación:} Esencial para la trazabilidad de cambios (commits atómicos), colaboración segura y rollback en caso de errores. Rama \texttt{main} protegida con revisiones; rama \texttt{develop} para integración de features. Squash commits antes de merge para mantener historial limpio.
+    
+    \item \textbf{ESLint y Prettier:} Linting y code formatting.
+    \\ \textit{Justificación:} Conformidad automática con estándares de código (airbnb-typescript preset). Prettier asegura que commits nunca tengan conflictos de formateo.
+\end{itemize}
+
+\section{Estrategia de Testing}
+
+La calidad de código es crítica en sistemas que manejan datos empresariales sensibles. Se implementa una estrategia de testing en tres niveles:
+
+\begin{itemize}
+    \item \textbf{Unit Tests (Jest):} Testeado en backend para funciones puras: cálculo de horas, validación de turnos, lógica de permisos RBAC. Target: 80\% de cobertura en módulos críticos.
+    
+    \item \textbf{Integration Tests (Supertest + Jest):} Validación de flujos API completos: crear usuario → asignar rol → consultar datos desde cliente. Incluye mock de PostgreSQL con test containers.
+    
+    \item \textbf{E2E Tests (Playwright):} Casos de uso completos desde UI: login CEO → acceder dashboard → filtrar por sede. Tests en navegador real (Chrome, Firefox).
+\end{itemize}
+
+\textbf{Ejecución:} Scripts en \texttt{package.json}: \texttt{npm run test}, \texttt{npm run test:e2e}. Integración con CI/CD para rechazar PR si tests fallan.
+
+\section{Seguridad y Control de Acceso}
+
+La seguridad es multinivel y se refuerza en cada capa:
+
+\begin{itemize}
+    \item \textbf{Autenticación (JWT):} 
+    \begin{itemize}
+        \item Access Token válido 15 minutos (minimiza exposición si es robado).
+        \item Refresh Token válido 7 días, almacenado en HTTP-only cookie (protegido de XSS).
+        \item Backend valida firma JWT en cada petición; rechaza si expirado o inválido.
+    \end{itemize}
+    
+    \item \textbf{Autorización (RBAC):}
+    \begin{itemize}
+        \item Tres roles: \texttt{ADMIN} (CEO), \texttt{MANAGER} (Gerente), \texttt{EMPLOYEE} (Empleado).
+        \item Middleware Express valida permisos antes de ejecutar lógica: \texttt{(req, res, next) => checkRole(req.user.role, REQUIRED\_ROLES)}.
+        \item Filtrado de datos en queries: empleado solo ve sus turnos y nómina, gerente solo su sede.
+    \end{itemize}
+    
+    \item \textbf{Validación en Frontend y Backend:}
+    \begin{itemize}
+        \item Frontend valida con Zod para UX rápido.
+        \item Backend valida de nuevo por seguridad (nunca confiar en cliente).
+    \end{itemize}
+    
+    \item \textbf{Protección de Datos Sensibles:}
+    \begin{itemize}
+        \item Nóminas y contratos se transmiten por HTTPS (TLS 1.2+).
+        \item Contraseñas hasheadas con bcrypt (10 rounds) en DB.
+        \item SQL injection prevenida por Prisma (parameterized queries).
+    \end{itemize}
+\end{itemize}
+
+\section{Performance y Escalabilidad}
+
+Optimizaciones implementadas para garantizar responsividad incluso al crecer:
+
+\begin{itemize}
+    \item \textbf{Frontend:}
+    \begin{itemize}
+        \item Code splitting: cada ruta carga solo su JS (lazy loading con React.lazy).
+        \item Caché inteligente con TanStack Query: evita fetches innecesarios.
+        \item Compression gzip en dist (Vite).
+        \item Imágenes optimizadas (webp, srcset responsivo).
+    \end{itemize}
+    
+    \item \textbf{Backend:}
+    \begin{itemize}
+        \item Índices PostgreSQL en columnas frequently queried: usuario\_id, sede\_id, fecha.
+        \item Paging en listados (no traer 10K turnos sin paginar).
+        \item Compression HTTP (gzip) de respuestas JSON grandes.
+        \item Connection pooling con Prisma para no agotarBD.
+    \end{itemize}
+    
+    \item \textbf{Infraestructura:}
+    \begin{itemize}
+        \item Docker containers permiten scaling horizontal (múltiples instancias del backend).
+        \item Load balancer (nginx o AWS ALB) distribuye peticiones.
+    \end{itemize}
+\end{itemize}
+
+\section{Deployment y DevOps}
+
+Configuración para producción:
+
+\begin{itemize}
+    \item \textbf{Containerización:} Dockerfile para backend (Node.js image alpine, <100MB). Frontend buildado a static files (HTML/CSS/JS), servido por nginx.
+    
+    \item \textbf{Base de Datos:} PostgreSQL en container separado (volumen persistente) o servicio managed (AWS RDS). Backups automáticos diarios.
+    
+    \item \textbf{Entornos:}
+    \begin{itemize}
+        \item \texttt{Development:} localhost:3000 (frontend), localhost:3001 (backend). Database local.
+        \item \texttt{Production:} Docker Compose o Kubernetes. Variables de entorno para credenciales (no hardcodeadas).
+    \end{itemize}
+    
+    \item \textbf{Monitoreo:} Logs centralizados (stdout/stderr capturados por Docker). Alertas si API no responde.
+\end{itemize}
+
+\section{Análisis Comparativo: Alternativas Descartadas}
+
+La Tabla \ref{tab:tech_comparison} justifica por qué se seleccionó PERN+TS sobre otras opciones del mercado.
+
+\begin{table}[h]
+    \centering
+    \caption{Comparativa de stacks tecnológicos: razones de selección PERN}
+    \label{tab:tech_comparison}
+    \vspace{0.3cm}
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>
+        {\raggedright\arraybackslash}p{0.22\textwidth}
+        >{\raggedright\arraybackslash}p{0.26\textwidth}
+        X}
+        \toprule
+        \textbf{Stack} & \textbf{Ventajas} & \textbf{Limitaciones / Razones de rechazo} \\
+        \midrule
+        \textbf{PERN + TypeScript} & Community grande, open-source, flexible, mobile-first facil, ACID DB, testing sencillo & Ninguno para este proyecto. Seleccionado. \\
+        \addlinespace
+        \textbf{MEAN/MERN (MongoDB)} & Schema flexible, rapido para prototipo & MongoDB pierde ACID en collections distribuidas. Para datos criticos (nominas) se requiere integridad. \\
+        \addlinespace
+        \textbf{Next.js (SSR fullstack)} & Menos boilerplate, SSR de serie & Next.js mezcla backend/frontend. Dificulta testing aislado. Overkill para esta SPA. \\
+        \addlinespace
+        \textbf{.NET + Azure} & Enterprise-grade, MSSQL robusto & Licenciado y costoso. Overkill para PYME. Menos community para features innovadores. \\
+        \addlinespace
+        \textbf{Django + PostgreSQL} & DRF excelente, admin built-in & Python frontend debil (no hay equivalente a React). Habria que usar React + Django API, similar a PERN pero con menos integraciones. \\
+        \addlinespace
+        \textbf{Java Spring + React} & Spring Boot robusto, mature & Verboso, lento de desarrollar en solitario. Overhead de JVM. Mejor para teams grandes. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
