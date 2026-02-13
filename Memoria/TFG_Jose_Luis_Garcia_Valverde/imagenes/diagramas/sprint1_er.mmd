@@ -11,7 +11,7 @@ erDiagram
         string email UK
         string password
         string name
-        enum role "ADMIN|MANAGER|EMPLOYEE"
+        enum role
         string sedeId FK
         datetime createdAt
         datetime updatedAt
@@ -30,16 +30,14 @@ erDiagram
 
     SHIFT {
         string id PK
-        enum type "MORNING|AFTERNOON|NIGHT"
-        datetime date
-        string startTime
-        string endTime
+        enum type
+        date date
+        time startTime
+        time endTime
         string employeeId FK
         string sedeId FK
         boolean confirmed
-        boolean cancelled
         datetime createdAt
-        unique "date,type,employeeId,sedeId"
     }
 
     SHIFTREQUEST {
@@ -48,9 +46,7 @@ erDiagram
         string targetShiftId FK
         string initiatorId FK
         string targetId FK
-        enum status "PENDING|APPROVED|REJECTED|CANCELLED"
+        enum status
         string reason
-        datetime decidedAt "nullable"
-        string approvedBy FK "nullable"
         datetime createdAt
     }
