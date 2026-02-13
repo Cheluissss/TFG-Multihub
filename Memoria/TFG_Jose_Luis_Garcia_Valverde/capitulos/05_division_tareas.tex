@@ -181,8 +181,294 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
 \section{Planificación de Sprints (6 x 2 semanas)}
 
 \subsection*{Sprint 1 (Feb 9-22): Infraestructura y Autenticación}
-\textbf{PBIs:} 1-7 (28 SP)
+\textbf{PBIs:} 1-9 (28 SP) \textbf{COMPLETADO}
 
+\subsubsection*{PBI-1: Setup (git, ESLint, Prettier)}
+Inicialización del repositorio con estructura de carpetas para frontend y backend. Se configuraron:
+\begin{itemize}
+    \item Repositorio Git en GitHub (TFG-Multihub)
+    \item ESLint con configuración airbnb-typescript
+    \item Prettier para formato automático
+    \item Estructura monorepo: \texttt{/backend} y \texttt{/frontend}
+\end{itemize}
+
+\subsubsection*{PBI-2: PostgreSQL + Schema}
+Base de datos con Prisma ORM. Schema incluye:
+\begin{itemize}
+    \item \textbf{User}: Modelo de empleados con roles (ADMIN, MANAGER, EMPLOYEE)
+    \item \textbf{Sede}: Oficinas con manager asignado
+    \item \textbf{Shift}: Turnos laborales con validación de no solapamiento
+    \item \textbf{ShiftRequest}: Solicitudes de permuta entre empleados
+\end{itemize}
+
+Ejemplo del schema en Prisma:
+\begin{lstlisting}[language=typescript]
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole
+  sedeId    String?
+  // ... relaciones ...
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+\end{lstlisting}
+
+\subsubsection*{PBI-3: Express + Middleware}
+Backend Node.js con Express configurado con:
+\begin{itemize}
+    \item Middleware CORS con credenciales habilitadas
+    \item Body-parser para JSON
+    \item Gestión de errores global
+    \item Health check endpoint en \texttt{GET /health}
+\end{itemize}
+
+\subsubsection*{PBI-4: React + Vite + Tailwind}
+Frontend con stack moderno:
+\begin{itemize}
+    \item React 18 con Vite como bundler
+    \item Tailwind CSS para estilos
+    \item React Router para navegación
+    \item TanStack Query para caché de datos
+    \item TypeScript strict mode
+\end{itemize}
+
+\subsubsection*{PBI-5: JWT Tokens}
+Sistema de autenticación con JWT. Implementación de dos tokens:
+
+\textbf{Access Token:} Duraión 15 minutos
+\textbf{Refresh Token:} Duración 7 días (almacenado en httpOnly cookie)
+
+Código de generación:
+\begin{lstlisting}[language=typescript]
+export function generateTokens(userId: string, email: string, role: string) {
+  const accessToken = jwt.sign(
+    { userId, email, role },
+    process.env.JWT_SECRET!,
+    { expiresIn: '15m' }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId, email, role },
+    process.env.JWT_REFRESH_SECRET!,
+    { expiresIn: '7d' }
+  );
+
+  return { accessToken, refreshToken };
+}
+\end{lstlisting}
+
+Middleware de validación:
+\begin{lstlisting}[language=typescript]
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET!);
+    req.user = payload;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+\end{lstlisting}
+
+\subsubsection*{PBI-6: Endpoint /auth/login}
+Endpoint REST para autenticación:
+\begin{itemize}
+    \item Validación de credenciales contre base de datos
+    \item Hash de contraseña con bcryptjs (10 rounds)
+    \item Generación de JWT tokens
+    \item Cookie httpOnly para refresh token
+\end{itemize}
+
+Código del servicio:
+\begin{lstlisting}[language=typescript]
+async login(credentials: LoginRequest): Promise<LoginResponse> {
+  const validated = LoginSchema.parse(credentials);
+  
+  const user = await prisma.user.findUnique({
+    where: { email: validated.email },
+  });
+
+  if (!user) {
+    throw new Error('Usuario o contraseña incorrectos');
+  }
+
+  const passwordMatch = await bcryptjs.compare(
+    validated.password, 
+    user.password
+  );
+
+  if (!passwordMatch) {
+    throw new Error('Usuario o contraseña incorrectos');
+  }
+
+  const tokens = generateTokens(user.id, user.email, user.role);
+  return {
+    user: this.excludePassword(user),
+    tokens,
+  };
+}
+\end{lstlisting}
+
+\subsubsection*{PBI-7: Pantalla Login (Frontend)}
+Componente React con:
+\begin{itemize}
+    \item Formulario con validaciones en tiempo real
+    \item Mensajes de error específicos por campo
+    \item Estado de carga con spinner animado
+    \item Redirección automática a dashboard tras login exitoso
+    \item Manejo de sesión con AuthContext
+\end{itemize}
+
+Almacenamiento de tokens:
+\begin{lstlisting}[language=typescript]
+export const getAccessToken = (): string | null => {
+  return localStorage.getItem('accessToken');
+};
+
+export const setAccessToken = (token: string): void => {
+  localStorage.setItem('accessToken', token);
+};
+\end{lstlisting}
+
+AuthProvider para estado global:
+\begin{lstlisting}[language=typescript]
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(getStoredUser());
+
+  const login = async (credentials: LoginRequest): Promise<void> => {
+    const response = await authAPI.login(credentials);
+    setUser(response.data.user);
+    setAccessToken(response.data.accessToken);
+  };
+
+  const contextValue: AuthContextType = {
+    user,
+    isAuthenticated: !!user && !!getAccessToken(),
+    login,
+    logout,
+    refreshTokens,
+  };
+
+  return React.createElement(AuthContext.Provider, { value: contextValue }, children);
+};
+\end{lstlisting}
+
+\subsubsection*{PBI-8: RBAC Middleware}
+Control de acceso basado en roles. Middleware para proteger endpoints:
+\begin{lstlisting}[language=typescript]
+export const roleMiddleware = (allowedRoles: UserRole[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    next();
+  };
+};
+\end{lstlisting}
+
+Ejemplo de uso en rutas protegidas:
+\begin{lstlisting}[language=typescript]
+router.post('/register', 
+  authMiddleware, 
+  roleMiddleware(['ADMIN']), 
+  (req, res) => authController.register(req, res)
+);
+\end{lstlisting}
+
+\subsubsection*{PBI-9: Endpoint /auth/register}
+Creación de usuarios por administrador. Características:
+\begin{itemize}
+    \item Contraseña temporal generada automáticamente (10 caracteres)
+    \item Solo ADMIN puede crear usuarios
+    \item El empleado cambia la contraseña en primer acceso
+\end{itemize}
+
+\begin{lstlisting}[language=typescript]
+async register(
+  data: RegisterRequest,
+  adminId: string
+): Promise<{ user: User; tempPassword: string }> {
+  // Generar contraseña temporal (10 caracteres aleatorios)
+  const tempPassword = Math.random().toString(36).slice(2, 12);
+  const hashedPassword = await bcryptjs.hash(tempPassword, 10);
+
+  const newUser = await prisma.user.create({
+    data: {
+      email: data.email,
+      name: data.name,
+      password: hashedPassword,
+      role: data.role as UserRole,
+      sedeId: data.sedeId,
+    },
+  });
+
+  return {
+    user: this.excludePassword(newUser),
+    tempPassword,
+  };
+}
+\end{lstlisting}
+
+\subsubsection*{Validaciones con Zod}
+Schema de validación para login y registro:
+\begin{lstlisting}[language=typescript]
+export const LoginSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Contraseña mínimo 6 caracteres'),
+});
+
+export const RegisterSchema = z.object({
+  email: z.string().email('Email inválido'),
+  name: z.string().min(2, 'Nombre requerido'),
+  role: z.enum(['ADMIN', 'MANAGER', 'EMPLOYEE']).default('EMPLOYEE'),
+  sedeId: z.string().optional(),
+});
+\end{lstlisting}
+
+\subsubsection*{Rutas Protegidas - Frontend}
+Componente ProtectedRoute para control de acceso:
+\begin{lstlisting}[language=typescript]
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requiredRoles 
+}) => {
+  const { user, isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRoles && !requiredRoles.includes(user?.role!)) {
+    return <div>Acceso denegado</div>;
+  }
+
+  return <>{children}</>;
+};
+\end{lstlisting}
+
+\subsection*{Sprint 1 - Resumen Técnico}
+\begin{itemize}
+    \item \textbf{Stack:} PERN + TypeScript
+    \item \textbf{Autenticación:} JWT con access/refresh tokens
+    \item \textbf{Base de datos:} PostgreSQL 16 con Prisma ORM
+    \item \textbf{Validaciones:} Zod schemas
+    \item \textbf{API Routes:} 7 endpoints de autenticación
+    \item \textbf{Frontend:} React Router con rutas protegidas
+    \item \textbf{DevOps:} Docker Compose, GitHub Actions CI/CD
+\end{itemize}
 
 \subsection*{Sprint 2 (Feb 23-Mar 8): RBAC y Gestión de Usuarios}
 \textbf{PBIs:} 8-14 (30 SP)
