@@ -1,0 +1,45 @@
+sequenceDiagram
+    participant User as Usuario
+    participant Client as Frontend React
+    participant Server as Backend Express
+    participant DB as PostgreSQL
+    participant JWT as JWT Generator
+
+    User->>Client: Ingresa email/password
+    Client->>Client: Valida con Zod (schema)
+    
+    alt Validacion fallida
+        Client->>User: Muestra error de validacion
+    else Validacion exitosa
+        Client->>Server: POST /api/auth/login (JSON)
+        
+        Server->>Server: Valida schemas con Zod
+        Server->>DB: SELECT * FROM User WHERE email=?
+        DB-->>Server: Usuario encontrado (o null)
+        
+        alt Usuario no existe
+            Server-->>Client: 401 Unauthorized
+            Client->>User: "Usuario o contrasena incorrectos"
+        else Usuario existe
+            Server->>Server: bcryptjs.compare(input_password, hash)
+            
+            alt Password incorrecta
+                Server-->>Client: 401 Unauthorized
+                Client->>User: "Usuario o contrasena incorrectos"
+            else Password correcta
+                Server->>JWT: generateTokens(userId, email, role)
+                JWT-->>Server: accessToken + refreshToken
+                Server->>Server: Excluir password del response
+                
+                Server-->>Client: 200 OK {user, accessToken, refreshToken en cookie}
+                
+                Client->>Client: if (accessToken) {
+                Client->>Client: setAccessToken(localStorage)
+                Client->>Client: setStoredUser(localStorage)
+                Client->>Client: }
+                
+                Client->>Client: Redirect a /dashboard
+                Client->>User: Muestra Dashboard
+            end
+        end
+    end

@@ -1,0 +1,56 @@
+erDiagram
+    USER ||--o{ SEDE : "belongs_to"
+    USER ||--o{ SHIFT : "assigned_to"
+    USER ||--o{ SHIFTREQUEST : "initiates"
+    USER ||--o{ SHIFTREQUEST : "receives"
+    SEDE ||--o{ SHIFT : "contains"
+    SHIFT ||--o{ SHIFTREQUEST : "involved_in"
+
+    USER {
+        string id PK
+        string email UK
+        string password
+        string name
+        enum role "ADMIN|MANAGER|EMPLOYEE"
+        string sedeId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    SEDE {
+        string id PK
+        string name
+        string address
+        string city
+        string phone
+        string managerId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    SHIFT {
+        string id PK
+        enum type "MORNING|AFTERNOON|NIGHT"
+        datetime date
+        string startTime
+        string endTime
+        string employeeId FK
+        string sedeId FK
+        boolean confirmed
+        boolean cancelled
+        datetime createdAt
+        unique "date,type,employeeId,sedeId"
+    }
+
+    SHIFTREQUEST {
+        string id PK
+        string initiatorShiftId FK
+        string targetShiftId FK
+        string initiatorId FK
+        string targetId FK
+        enum status "PENDING|APPROVED|REJECTED|CANCELLED"
+        string reason
+        datetime decidedAt "nullable"
+        string approvedBy FK "nullable"
+        datetime createdAt
+    }

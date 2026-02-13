@@ -1,0 +1,41 @@
+sequenceDiagram
+    participant Client as Frontend
+    participant Middleware as authMiddleware
+    participant RoleMiddleware as roleMiddleware
+    participant Controller as Controller
+    participant DB as PostgreSQL
+
+    Client->>Middleware: GET /api/users (con Authorization header)
+    
+    alt Token no presente
+        Middleware-->>Client: 401 No token provided
+    else Token presente
+        Middleware->>Middleware: jwt.verify(token, JWT_SECRET)
+        
+        alt Token invalido o expirado
+            Middleware-->>Client: 401 Invalid token
+        else Token valido
+            Middleware->>Middleware: Extrae claims: {userId, email, role}
+            Middleware->>Middleware: Asigna a req.user
+            Middleware->>RoleMiddleware: Llama next()
+            
+            alt Role no en allowedRoles
+                RoleMiddleware-->>Client: 403 Access denied
+            else Role permitido
+                RoleMiddleware->>Controller: Ejecuta logica de negocio
+                
+                alt Si usuario es EMPLOYEE
+                    Controller->>DB: SELECT * FROM User WHERE id = req.user.id
+                    DB-->>Controller: Retorna solo su propio usuario
+                else Si usuario es MANAGER
+                    Controller->>DB: SELECT * FROM User WHERE sedeId = req.user.sedeId
+                    DB-->>Controller: Retorna empleados de su sede
+                else Si usuario es ADMIN
+                    Controller->>DB: SELECT * FROM User (sin filtro)
+                    DB-->>Controller: Retorna todos los usuarios
+                end
+                
+                Controller-->>Client: 200 OK {users: [...]}
+            end
+        end
+    end

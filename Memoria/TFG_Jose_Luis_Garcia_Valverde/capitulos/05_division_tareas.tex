@@ -185,6 +185,18 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
 
 El Sprint 1 constituye la fase fundamental del proyecto, estableciendo los cimientos arquitectónicos y sistemas de autenticación requeridos para el funcionamiento seguro de la aplicación. Este sprint se centró en la implementación de una infraestructura robusta que cumpliera con estándares industry e implementara buenas prácticas de seguridad.
 
+\textbf{Diagrama de Entidades y Relaciones - Sprint 1:}
+
+El schema de base de datos define cuatro entidades principales con las siguientes relaciones:
+\begin{itemize}
+    \item User pertenece a una Sede (opcional para ADMIN)
+    \item User puede tener múltiples Shifts asignados
+    \item Sede contiene múltiples Shifts
+    \item ShiftRequest vincula dos Shifts (solicitante y destino) e involucra a dos usuarios (iniciador y destinatario)
+\end{itemize}
+
+Ver archivo de diagrama: \texttt{imagenes/diagramas/sprint1\_er.mmd} para visualización del modelo ER completo.
+
 \subsubsection*{PBI-1: Setup (git, ESLint, Prettier)}
 
 La inicialización del proyecto mediante control de versiones y definición de estándares de código es esencial para garantizar la mantenibilidad y colaboración eficiente \cite{typescript_docs}. Se realizó la configuración de:
@@ -299,6 +311,17 @@ La validación de credenciales tiene varias capas defensivas encadenadas:
     \item \textbf{Generación de Tokens}: Si todo es válido, genera JWT con claims (userId, role) y los retorna.
 \end{enumerate}
 
+\textbf{Diagrama de Secuencia - Flujo de Login:}
+
+El flujo de autenticación puede visualizarse en el diagrama de secuencia disponible en \texttt{imagenes/diagramas/pbi6\_login\_sequence.mmd}. El diagrama muestra los controles de seguridad en cada etapa:
+\begin{itemize}
+    \item Validación de entrada (frontend y backend)
+    \item Búsqueda segura de usuario en base de datos
+    \item Comparación de contraseña con hash
+    \item Generación y almacenamiento de tokens
+    \item Redirección al dashboard con sesión establecida
+\end{itemize}
+
 \textbf{Por qué múltiples capas}: Si confiaría en una sola validación:
 \begin{itemize}
     \item Solo schema: Un atacante envía HTML/JavaScript en password, causa RCE.
@@ -368,7 +391,17 @@ El sistema tiene tres roles con permisos progresivos:
     \item Si solo DB: Un cambio en c\u00f3digo de query puede exponer datos (riesgo humano).
     \item Ambos: Defense in depth. Un fallo no compromete seguridad.
 \end{itemize}
+\textbf{Diagrama de Secuencia - Validación RBAC:}
 
+El proceso de validación de roles en cada petición se visualiza en el diagrama disponible en \texttt{imagenes/diagramas/pbi8\_rbac\_sequence.mmd}. El flujo muestra:
+\begin{itemize}
+    \item Cliente envía petición con JWT en header Authorization
+    \item Middleware valida token, extrae claims (incluyendo role)
+    \item RoleMiddleware rechaza si role no está en lista permitida
+    \item Controller ejecuta lógica con filtrado de datos según rol
+    \item Base de datos asegura que resultados están filtrados (defensa en profundidad)
+    \item Cliente recibe solo datos para los que está autorizado
+\end{itemize}
 \subsubsection*{PBI-9: Endpoint /auth/register - Creación de Usuarios por Admin}
 
 La creación de usuarios sigue un flujo específico para garantizar control y auditabilidad:
@@ -406,24 +439,24 @@ La creación de usuarios sigue un flujo específico para garantizar control y au
     \item \texttt{newPassword}: Validado por Zod (mínimo 6 caracteres, no puede ser igual a oldPassword).
 \end{itemize}
 
-\textbf{Auditoría}: Cada cambio de contraseña registra timestamp, IP, user agent. Crítico para investigar si contraseña fue cambiada sin consentimiento.
+\textbf{Auditoría}: Cada cambio de contraseña registra timestamp, IP, user agent. Crítico para investigar si una contraseña fue cambiada sin consentimiento.
 
 \subsubsection*{Componente ProtectedRoute - Rutas Protegidas (Frontend)}
 
 Frontend tiene dos niveles defensivos:
 
 \begin{enumerate}
-    \item \textbf{Nivel de Componente (ProtectedRoute)}: Si usuario no está autenticado, redirige a login. Si está autenticado pero su rol no está en lista de roles requeridos, muestra ``Acceso denegado''.
+    \item \textbf{Nivel de Componente (ProtectedRoute)}: Si el usuario no está autenticado, redirige a login. Si está autenticado pero su rol no está en lista de roles requeridos, muestra ``Acceso denegado''.
     \item \textbf{Nivel de API}: Incluso si ProtectedRoute falla (ej: bug de desarrollo), el backend valida JWT y rechaza requests no autorizadas.
 \end{enumerate}
 
 \textbf{Arquitectura de Capas}:
 \begin{itemize}
     \item Backend es ``la verdad''. Es la única fuente auténtica de permiso.
-    \item Frontend es UX layer. Protege UI para que interfaz no se rompa o no muestre opciones invalidas.
+    \item Frontend es UX layer. Protege la UI para que la interfaz no se rompa o no muestre opciones invalidas.
 \end{itemize}
 
-Nunca confiar en frontend para seguridad. Atacante puede abrir DevTools, falsificar localStorage, enviar requests sin pasar por UI.\newline
+Nunca confiar en frontend para seguridad. El atacante puede abrir DevTools, falsificar localStorage, enviar requests sin pasar por UI.\newline
 
 \textbf{Redirección a Login}:
 \begin{lstlisting}[language=typescript]
@@ -439,7 +472,7 @@ La redirección es el comportamiento correcto porque:
     \item Browser cerrado: Refresh token expiró (7 días pasó), redirige a login
 \end{itemize}
 
-Alternativa: mostrar error. Pero UX es peor (usuario confundido), y login no es una ``error'', es un estado normal.
+Alternativa: la princiapl alternativa es la de mostrar un error. Pero la UX es peor (usuario confundido), y el login no es un ''error'', es un estado normal.
 
 \subsubsection*{Resumen de Decisiones Arquitectónicas en Sprint 1}
 
@@ -461,7 +494,7 @@ Las decisiones clave que definen la arquitectura del sistema:
     \item \textbf{RBAC Granular}: Roles separados (ADMIN/MANAGER/EMPLOYEE) con permisos progresivos. Escalable: agregar nuevo rol es line-deletion-no code change.
 \end{enumerate}
 
-Cada decisión responde a un requisito de negocio o arquitectónico específico, no es cargo-culting de ``best practices''.
+Cada decisión responde a un requisito de negocio o arquitectónico específico, no es cargo-culting de ``best practices`.
 
 \subsubsection*{Resultados y Validación Sprint 1}
 
