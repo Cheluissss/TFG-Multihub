@@ -13,6 +13,9 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200,
   })
 );
 app.use(express.json());
@@ -28,7 +31,7 @@ app.get('/api', (_req, res) => {
 });
 
 // Auth routes
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 
 // Error handling
 app.use((_req, res) => {

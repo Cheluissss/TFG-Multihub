@@ -249,7 +249,7 @@ export class AuthService {
     });
 
     return {
-      users: users.map((u) => this.excludePassword(u)),
+      users: users.map((u: any) => this.excludePassword(u)),
       total,
       page,
       limit,
