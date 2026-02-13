@@ -206,7 +206,7 @@ El schema relacional implementado define:
     \item \textbf{User}: Con roles ADMIN (CEO), MANAGER (Gerente), EMPLOYEE (Empleado). Cada tabla tendrá foreign keys a usuarios para auditoría.
     \item \textbf{Sede}: Oficinas, cada una con un manager. Empleados pertenecen a una sede, managers solo ven su sede.
     \item \textbf{Shift}: Turnos asignados. La restricción única previene solapamientos automáticamente.
-    \item \textbf{ShiftRequest}: Permutas solicitadas. Status progresa: PENDING → APPROVED/REJECTED.
+    \item \textbf{ShiftRequest}: Permutas solicitadas. Status progresa: PENDING a APPROVED/REJECTED.
 \end{itemize}
 
 Justificación de Negocio: Validar overlaps de turnos en código (aplicación) es frágil: si dos requests llegan simultáneamente, ambos ven ``no hay overlap'' y ambos insertan. La validación en DB es atómica y centralizada. Adem\u00e1s, si en el futuro agrego una API móvil, web scraper, o cambio framework, la lógica de validación sigue siendo correcta sin necesidad de replicarla.
@@ -244,8 +244,8 @@ La interfaz requería separación clara entre:
 
 \textbf{Justificación de TypeScript Strict Mode}: Errores comunes en JavaScript sin tipos:
 \begin{enumerate}
-    \item Acceder a propiedad inexistente: \texttt{user.sedeId.name} → TypeError si sedeId es null
-    \item Pasar tipo incorrecto a API: enviar email string cuando API espera number → falla silenciosa en backend
+    \item Acceder a propiedad inexistente: \texttt{user.sedeId.name} devuelve TypeError si sedeId es null
+    \item Pasar tipo incorrecto a API: enviar email string cuando API espera number causa falla silenciosa en backend
     \item Renombrar campo en una ubicación pero olvidar otra: \texttt{user.email} vs \texttt{user.emailAddress}
 \end{enumerate}
 
@@ -318,7 +318,7 @@ La arquitectura de manejo de autenticación en frontend enfrenta un trade-off:
 
 \begin{itemize}
     \item \textbf{Estado Global (Context API):} Acceso desde cualquier componente, centralizado. Pero requiere provider wrapper, tiene ciclos de vida complejos.
-    \item \textbf{Props Drilling:} Pasar state a través de componentes intermedios. Simple pero \texttt{<App> → <Navbar> → <UserMenu> → <LogoutButton>} es tedioso.
+    \item \textbf{Props Drilling:} Pasar state a través de componentes intermedios. Simple pero requiere encadenar: App - Navbar - UserMenu - LogoutButton, es tedioso.
     \item \textbf{State Manager Externo (Redux, Zustand):} Completo pero overhead para aplicación mediana.
 \end{itemize}
 
@@ -336,7 +336,7 @@ Este patrón es estándar en OAuth 2.0. Alternativa de guardar ambos en localSto
 \begin{enumerate}
     \item Usuario abre aplicaci\u00f3n en navegador.
     \item AuthProvider monta, intenta refetch usando refresh token en cookie.
-    \item Si refresh es v\u00e1lido, obtiene nuevo access token → usuario redirigido a dashboard (sesión persistió).
+    \item Si refresh es válido, obtiene nuevo access token y usuario redirigido a dashboard (sesión persistió).
     \item Si refresh expiró, usuario redirigido a login page (sesión finalizó).
 \end{enumerate}
 
@@ -387,17 +387,17 @@ La creación de usuarios sigue un flujo específico para garantizar control y au
 
 \textbf{Justificación de Contraseña Temporal}:
 \begin{itemize}
-    \item ✓ Admin no conoce contraseña real del empleado (segregación de deberes)
-    \item ✓ Empleado no puede elegir contraseña débil (temp es robusta por defecto)
-    \item ✓ Previene ataques de diccionario (contraseña random de 10 chars tiene $10^{10}$ combinaciones vs human-chosen típicamente 3 palabras)
-    \item  Requiere que admin comunique temp password (fuera de band). Riesgo si interceptado.
+    \item (PRO) Admin no conoce contraseña real del empleado (segregación de deberes)
+    \item (PRO) Empleado no puede elegir contraseña débil (temp es robusta por defecto)
+    \item (PRO) Previene ataques de diccionario (contraseña random de 10 chars tiene $10^{10}$ combinaciones vs human-chosen típicamente 3 palabras)
+    \item (CONTRA) Requiere que admin comunique temp password (fuera de band). Riesgo si interceptado.
 \end{itemize}
 
 \textbf{Alternativa Rechazada}: Admin elige contraseña inicial.
 \begin{itemize}
-    \item ✓ Menos pasos
-    \item ✗ Admin podría espiar contraseña del empleado (desconfianza)
-    \item ✗ Contraseña podría ser débil, predecible
+    \item (PRO) Menos pasos
+    \item (CONTRA) Admin podría espiar contraseña del empleado (desconfianza)
+    \item (CONTRA) Contraseña podría ser débil, predecible
 \end{itemize}
 
 \textbf{Validación de Cambio de Contraseña}: El endpoint \texttt{POST /auth/change-password} requiere:
@@ -434,9 +434,9 @@ if (!isAuthenticated) {
 
 La redirección es el comportamiento correcto porque:
 \begin{itemize}
-    \item Sessión expiró: Usuario intenta acceder /dashboard → redirige a login
+    \item Sessión expiró: Usuario intenta acceder /dashboard, redirige a login
     \item XSS attack: Si localStorage fue limpiada por ataques, usuario es deslogeado automáticamente
-    \item Browser cerrado: Refresh token expiró (7 días pasó) → redirige a login
+    \item Browser cerrado: Refresh token expiró (7 días pasó), redirige a login
 \end{itemize}
 
 Alternativa: mostrar error. Pero UX es peor (usuario confundido), y login no es una ``error'', es un estado normal.
