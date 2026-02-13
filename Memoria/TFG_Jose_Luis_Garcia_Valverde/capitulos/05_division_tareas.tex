@@ -29,7 +29,7 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
     \centering
     \caption{Backlog: Infraestructura}
     \vspace{0.3cm}
-    \begin{tabularx}{\textwidth}{l l c l}
+    \begin{tabularx}{\textwidth}{p{0.12\textwidth} X c p{0.12\textwidth}}
         \toprule
         \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
         \midrule
@@ -52,7 +52,7 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
     \centering
     \caption{Backlog: Usuarios y Sedes}
     \vspace{0.3cm}
-    \begin{tabularx}{\textwidth}{l l c l}
+    \begin{tabularx}{\textwidth}{p{0.12\textwidth} X c p{0.12\textwidth}}
         \toprule
         \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
         \midrule
@@ -71,7 +71,7 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
     \centering
     \caption{Backlog: Dashboard Ejecutivo}
     \vspace{0.3cm}
-    \begin{tabularx}{\textwidth}{l l c l}
+    \begin{tabularx}{\textwidth}{p{0.12\textwidth} X c p{0.12\textwidth}}
         \toprule
         \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
         \midrule
@@ -90,7 +90,7 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
     \centering
     \caption{Backlog: Turnos}
     \vspace{0.3cm}
-    \begin{tabularx}{\textwidth}{l l c l}
+    \begin{tabularx}{\textwidth}{p{0.12\textwidth} X c p{0.12\textwidth}}
         \toprule
         \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
         \midrule
@@ -109,7 +109,7 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
     \centering
     \caption{Backlog: Solicitudes de Permuta}
     \vspace{0.3cm}
-    \begin{tabularx}{\textwidth}{l l c l}
+    \begin{tabularx}{\textwidth}{p{0.12\textwidth} X c p{0.12\textwidth}}
         \toprule
         \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
         \midrule
@@ -127,7 +127,7 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
     \centering
     \caption{Backlog: Gestión de Productos}
     \vspace{0.3cm}
-    \begin{tabularx}{\textwidth}{l l c l}
+    \begin{tabularx}{\textwidth}{p{0.12\textwidth} X c p{0.12\textwidth}}
         \toprule
         \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
         \midrule
@@ -146,7 +146,7 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
     \centering
     \caption{Backlog: Gestión de Nóminas}
     \vspace{0.3cm}
-    \begin{tabularx}{\textwidth}{l l c l}
+    \begin{tabularx}{\textwidth}{p{0.12\textwidth} X c p{0.12\textwidth}}
         \toprule
         \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
         \midrule
@@ -165,7 +165,7 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
     \centering
     \caption{Backlog: Feedback y Testing}
     \vspace{0.3cm}
-    \begin{tabularx}{\textwidth}{l l c l}
+    \begin{tabularx}{\textwidth}{p{0.12\textwidth} X c p{0.12\textwidth}}
         \toprule
         \textbf{ID} & \textbf{Descripción} & \textbf{SP} & \textbf{Prioridad} \\
         \midrule
@@ -196,7 +196,7 @@ El schema de base de datos define cuatro entidades principales con las siguiente
 \end{itemize}
 
 \begin{center}
-    \includegraphics[width=0.95\textwidth]{imagenes/diagramas/sprint1_er.png}
+    \resizebox{\textwidth}{!}{\includegraphics{imagenes/diagramas/sprint1_er.png}}
 \end{center}
 
 \subsubsection*{PBI-1: Setup (git, ESLint, Prettier)}
@@ -325,7 +325,7 @@ El flujo de autenticación muestra los controles de seguridad en cada etapa:
 \end{itemize}
 
 \begin{center}
-    \includegraphics[width=\textwidth]{imagenes/diagramas/pbi6_login_sequence.png}
+    \resizebox{\textwidth}{!}{\includegraphics{imagenes/diagramas/pbi6_login_sequence.png}}
 \end{center}
 
 \textbf{Por qué múltiples capas}: Si confiaría en una sola validación:
@@ -410,7 +410,7 @@ El proceso de validación de roles en cada petición muestra el flujo defensivo 
 \end{itemize}
 
 \begin{center}
-    \includegraphics[width=\textwidth]{imagenes/diagramas/pbi8_rbac_sequence.png}
+    \resizebox{\textwidth}{!}{\includegraphics{imagenes/diagramas/pbi8_rbac_sequence.png}}
 \end{center}
 \subsubsection*{PBI-9: Endpoint /auth/register - Creación de Usuarios por Admin}
 
