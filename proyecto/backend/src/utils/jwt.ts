@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import type { JwtPayload } from './index.js';
+import type { JwtPayload } from '../types/index.js';
 
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';

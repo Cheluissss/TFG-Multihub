@@ -43,7 +43,10 @@ export const CreateSedeSchema = z.object({
   name: z.string().min(2, 'Nombre de sede requerido'),
   address: z.string().min(5, 'Dirección requerida'),
   city: z.string().min(2, 'Ciudad requerida'),
-  phone: z.string().regex(/^\+?[0-9\s-()]{7,}$/, 'Teléfono inválido').optional(),
+  phone: z
+    .string()
+    .regex(/^\+?[0-9\s-()]{7,}$/, 'Teléfono inválido')
+    .optional(),
   managerId: z.string().optional(),
 });
 
@@ -59,17 +62,19 @@ export const UpdateSedeSchema = z.object({
 // Shift Schema
 // ============
 
-export const CreateShiftSchema = z.object({
-  type: z.enum(['MORNING', 'AFTERNOON', 'NIGHT', 'CUSTOM']),
-  date: z.coerce.date(),
-  startTime: z.coerce.date(),
-  endTime: z.coerce.date(),
-  employeeId: z.string().cuid('ID de empleado inválido'),
-  sedeId: z.string().cuid('ID de sede inválido'),
-}).refine(
-  (data) => data.startTime < data.endTime,
-  { message: 'Hora de inicio debe ser antes que hora de fin', path: ['startTime'] }
-);
+export const CreateShiftSchema = z
+  .object({
+    type: z.enum(['MORNING', 'AFTERNOON', 'NIGHT', 'CUSTOM']),
+    date: z.coerce.date(),
+    startTime: z.coerce.date(),
+    endTime: z.coerce.date(),
+    employeeId: z.string().cuid('ID de empleado inválido'),
+    sedeId: z.string().cuid('ID de sede inválido'),
+  })
+  .refine((data) => data.startTime < data.endTime, {
+    message: 'Hora de inicio debe ser antes que hora de fin',
+    path: ['startTime'],
+  });
 
 export const UpdateShiftSchema = z.object({
   confirmed: z.boolean().optional(),
@@ -83,14 +88,16 @@ export const UpdateShiftSchema = z.object({
 // ShiftRequest Schema
 // ============
 
-export const CreateShiftRequestSchema = z.object({
-  initiatorShiftId: z.string().cuid('ID de turno inválido'),
-  targetShiftId: z.string().cuid('ID de turno objetivo inválido'),
-  reason: z.string().max(500).optional(),
-}).refine(
-  (data) => data.initiatorShiftId !== data.targetShiftId,
-  { message: 'No puedes solicitar permuta con el mismo turno', path: ['targetShiftId'] }
-);
+export const CreateShiftRequestSchema = z
+  .object({
+    initiatorShiftId: z.string().cuid('ID de turno inválido'),
+    targetShiftId: z.string().cuid('ID de turno objetivo inválido'),
+    reason: z.string().max(500).optional(),
+  })
+  .refine((data) => data.initiatorShiftId !== data.targetShiftId, {
+    message: 'No puedes solicitar permuta con el mismo turno',
+    path: ['targetShiftId'],
+  });
 
 export const ApproveShiftRequestSchema = z.object({
   status: z.enum(['APPROVED', 'REJECTED']),
