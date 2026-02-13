@@ -1,7 +1,6 @@
 Para generar las imágenes PNG desde los archivos Mermaid, puede usar cualquiera de estos metodos:
 
-OPCION 1: Usar Mermaid CLI (recomendado)
-=====================================
+# OPCION 1: Usar Mermaid CLI (recomendado)
 
 Instalar mermaid-cli globally:
 npm install -g @mermaid-js/mermaid-cli
@@ -12,37 +11,32 @@ mmdc -i pbi6_login_sequence.mmd -o pbi6_login_sequence.png
 mmdc -i pbi8_rbac_sequence.mmd -o pbi8_rbac_sequence.png
 
 O convertir todo de una vez:
-for file in *.mmd; do mmdc -i "$file" -o "${file%.mmd}.png"; done
+for file in \*.mmd; do mmdc -i "$file" -o "${file%.mmd}.png"; done
 
-
-OPCION 2: Usar Kroki API Online
-================================
+# OPCION 2: Usar Kroki API Online
 
 Usar curl para convertir a PNG:
 
 curl -X POST http://kroki.io/mermaid/png \
-  --data-binary @sprint1_er.mmd \
-  -o sprint1_er.png
+ --data-binary @sprint1_er.mmd \
+ -o sprint1_er.png
 
 Para todos los archivos:
-for file in *.mmd; do
-  curl -X POST http://kroki.io/mermaid/png \
-    --data-binary @"$file" \
+for file in \*.mmd; do
+curl -X POST http://kroki.io/mermaid/png \
+ --data-binary @"$file" \
     -o "${file%.mmd}.png"
 done
 
-
-OPCION 3: Editor Online
-========================
+# OPCION 3: Editor Online
 
 Abrir cada archivo .mmd content en: https://mermaid.live/
+
 - Copiar el contenido del archivo .mmd
 - Pegar en mermaid.live
 - Usar boton "Download as PNG"
 
-
-ARCHIVOS INCLUIDOS:
-===================
+# ARCHIVOS INCLUIDOS:
 
 1. sprint1_er.mmd
    - Diagrama entidad-relacion del schema de base de datos
@@ -64,31 +58,29 @@ ARCHIVOS INCLUIDOS:
    - Muestra filtrado de datos por rol (EMPLOYEE, MANAGER, ADMIN)
    - Ver en: imagenes/diagramas/pbi8_rbac_sequence.png (si se genera)
 
-
-INTEGRACION CON LATEX:
-======================
+# INTEGRACION CON LATEX:
 
 Para incluir las imagenes en el documento LaTeX:
 
 \begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{imagenes/diagramas/sprint1_er.png}
-    \caption{Diagrama ER - Sprint 1}
-    \label{fig:sprint1_er}
+\centering
+\includegraphics[width=\textwidth]{imagenes/diagramas/sprint1_er.png}
+\caption{Diagrama ER - Sprint 1}
+\label{fig:sprint1_er}
 \end{figure}
 
 \begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{imagenes/diagramas/pbi6_login_sequence.png}
-    \caption{Secuencia - Login (PBI-6)}
-    \label{fig:pbi6_login}
+\centering
+\includegraphics[width=\textwidth]{imagenes/diagramas/pbi6_login_sequence.png}
+\caption{Secuencia - Login (PBI-6)}
+\label{fig:pbi6_login}
 \end{figure}
 
 \begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{imagenes/diagramas/pbi8_rbac_sequence.png}
-    \caption{Secuencia - RBAC (PBI-8)}
-    \label{fig:pbi8_rbac}
+\centering
+\includegraphics[width=\textwidth]{imagenes/diagramas/pbi8_rbac_sequence.png}
+\caption{Secuencia - RBAC (PBI-8)}
+\label{fig:pbi8_rbac}
 \end{figure}
 
 Luego hacer referencia con: \ref{fig:sprint1_er}, \ref{fig:pbi6_login}, \ref{fig:pbi8_rbac}

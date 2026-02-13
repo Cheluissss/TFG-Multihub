@@ -195,7 +195,9 @@ El schema de base de datos define cuatro entidades principales con las siguiente
     \item ShiftRequest vincula dos Shifts (solicitante y destino) e involucra a dos usuarios (iniciador y destinatario)
 \end{itemize}
 
-Ver archivo de diagrama: \texttt{imagenes/diagramas/sprint1\_er.mmd} para visualización del modelo ER completo.
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{imagenes/diagramas/sprint1_er.png}
+\end{center}
 
 \subsubsection*{PBI-1: Setup (git, ESLint, Prettier)}
 
@@ -313,7 +315,7 @@ La validación de credenciales tiene varias capas defensivas encadenadas:
 
 \textbf{Diagrama de Secuencia - Flujo de Login:}
 
-El flujo de autenticación puede visualizarse en el diagrama de secuencia disponible en \texttt{imagenes/diagramas/pbi6\_login\_sequence.mmd}. El diagrama muestra los controles de seguridad en cada etapa:
+El flujo de autenticación muestra los controles de seguridad en cada etapa:
 \begin{itemize}
     \item Validación de entrada (frontend y backend)
     \item Búsqueda segura de usuario en base de datos
@@ -321,6 +323,10 @@ El flujo de autenticación puede visualizarse en el diagrama de secuencia dispon
     \item Generación y almacenamiento de tokens
     \item Redirección al dashboard con sesión establecida
 \end{itemize}
+
+\begin{center}
+    \includegraphics[width=\textwidth]{imagenes/diagramas/pbi6_login_sequence.png}
+\end{center}
 
 \textbf{Por qué múltiples capas}: Si confiaría en una sola validación:
 \begin{itemize}
@@ -393,7 +399,7 @@ El sistema tiene tres roles con permisos progresivos:
 \end{itemize}
 \textbf{Diagrama de Secuencia - Validación RBAC:}
 
-El proceso de validación de roles en cada petición se visualiza en el diagrama disponible en \texttt{imagenes/diagramas/pbi8\_rbac\_sequence.mmd}. El flujo muestra:
+El proceso de validación de roles en cada petición muestra el flujo defensivo de autorización:
 \begin{itemize}
     \item Cliente envía petición con JWT en header Authorization
     \item Middleware valida token, extrae claims (incluyendo role)
@@ -402,6 +408,10 @@ El proceso de validación de roles en cada petición se visualiza en el diagrama
     \item Base de datos asegura que resultados están filtrados (defensa en profundidad)
     \item Cliente recibe solo datos para los que está autorizado
 \end{itemize}
+
+\begin{center}
+    \includegraphics[width=\textwidth]{imagenes/diagramas/pbi8_rbac_sequence.png}
+\end{center}
 \subsubsection*{PBI-9: Endpoint /auth/register - Creación de Usuarios por Admin}
 
 La creación de usuarios sigue un flujo específico para garantizar control y auditabilidad:
