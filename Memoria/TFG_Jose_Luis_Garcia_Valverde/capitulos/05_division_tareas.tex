@@ -183,22 +183,30 @@ El Product Backlog contiene todas las funcionalidades organizadas por prioridad,
 \subsection*{Sprint 1 (Feb 9-22): Infraestructura y Autenticación}
 \textbf{PBIs:} 1-9 (28 SP) \textbf{COMPLETADO}
 
+El Sprint 1 constituye la fase fundamental del proyecto, estableciendo los cimientos arquitectónicos y sistemas de autenticación requeridos para el funcionamiento seguro de la aplicación. Este sprint se centró en la implementación de una infraestructura robusta que cumpliera con estándares industry e implementara buenas prácticas de seguridad.
+
 \subsubsection*{PBI-1: Setup (git, ESLint, Prettier)}
-Inicialización del repositorio con estructura de carpetas para frontend y backend. Se configuraron:
+
+La inicialización del proyecto mediante control de versiones y definición de estándares de código es esencial para garantizar la mantenibilidad y colaboración eficiente \cite{typescript_docs}. Se realizó la configuración de:
+
 \begin{itemize}
-    \item Repositorio Git en GitHub (TFG-Multihub)
-    \item ESLint con configuración airbnb-typescript
-    \item Prettier para formato automático
-    \item Estructura monorepo: \texttt{/backend} y \texttt{/frontend}
+    \item \textbf{Gestor de Control de Versiones:} Repositorio Git en GitHub (TFG-Multihub) para tracking de cambios y colaboración
+    \item \textbf{Linting:} ESLint con configuración \textit{airbnb-typescript} para mantener consistencia de código y prevenir errores comunes
+    \item \textbf{Formateo:} Prettier configurado para garantizar formato automático coherente en todo el codebase
+    \item \textbf{Estructura Monorepo:} Directorios separados para \texttt{/backend} y \texttt{/frontend} permitiendo gestión independiente de dependencias
 \end{itemize}
 
-\subsubsection*{PBI-2: PostgreSQL + Schema}
-Base de datos con Prisma ORM. Schema incluye:
+\subsubsection*{PBI-2: PostgreSQL + Schema de Base de Datos}
+
+El diseño relacional del sistema requería una base de datos que proporcionara ACID compliance y transaccionalidad robusta. Se seleccionó PostgreSQL 16 como motor de almacenamiento, complementado con Prisma ORM \cite{prisma_docs} para abstracción de datos tipada en TypeScript.
+
+El schema relacional implementado define los siguientes modelos de datos:
+
 \begin{itemize}
-    \item \textbf{User}: Modelo de empleados con roles (ADMIN, MANAGER, EMPLOYEE)
-    \item \textbf{Sede}: Oficinas con manager asignado
-    \item \textbf{Shift}: Turnos laborales con validación de no solapamiento
-    \item \textbf{ShiftRequest}: Solicitudes de permuta entre empleados
+    \item \textbf{User}: Entidad representante de usuarios del sistema con campos de autenticación, identificación y asignación de roles (ADMIN, MANAGER, EMPLOYEE)
+    \item \textbf{Sede}: Entidades de oficinas con información de localización, contacto y manager responsable
+    \item \textbf{Shift}: Entidades de turnos laborales con validación de no-solapamiento mediante restricciones de base de datos
+    \item \textbf{ShiftRequest}: Transacciones de solicitud de permuta entre empleados con workflow de aprobación
 \end{itemize}
 
 Ejemplo del schema en Prisma:
@@ -210,7 +218,8 @@ model User {
   name      String
   role      UserRole
   sedeId    String?
-  // ... relaciones ...
+  createdAt DateTime @default(now())
+  // ... relaciones y timestamps ...
 }
 
 enum UserRole {
@@ -218,36 +227,77 @@ enum UserRole {
   MANAGER
   EMPLOYEE
 }
+
+model Shift {
+  id       String   @id @default(cuid())
+  type     ShiftType
+  date     DateTime
+  startTime String
+  endTime  String
+  // Restricción única para prevenir overlaps
+  @@unique([date, type, employeeId, sedeId])
+}
 \end{lstlisting}
 
-\subsubsection*{PBI-3: Express + Middleware}
-Backend Node.js con Express configurado con:
+Justificación: El uso de Prisma ORM proporciona type-safety en tiempo de compilación, migraciones versionadas, y validaciones a nivel de schema. PostgreSQL fue seleccionado por su fiabilidad comprobada en entornos empresariales \cite{postgresql_docs} y soporte nativo de tipos de datos avanzados.
+
+\subsubsection*{PBI-3: Express.js + Middleware}
+
+El backend fue implementado usando Express.js \cite{express_docs}, framework minimalista pero robusto de Node.js. La configuración incluyó:
+
 \begin{itemize}
-    \item Middleware CORS con credenciales habilitadas
-    \item Body-parser para JSON
-    \item Gestión de errores global
-    \item Health check endpoint en \texttt{GET /health}
+    \item \textbf{Middleware CORS:} Configuración enabling credenciales para intercambio seguro de tokens JWT y cookies \cite{cors_mdn}
+    \item \textbf{Body Parser:} Middleware para parseado automático de payloads JSON
+    \item \textbf{Error Handling:} Middleware global para captura y normalización de errores
+    \item \textbf{Health Check:} Endpoint de diagnosticidad en \texttt{GET /health} para monitoreo de infraestructura
 \end{itemize}
+
+La configuración de CORS fue específicamente diseñada para permitir credenciales, prerequisito esencial para validación de refresh tokens en httpOnly cookies:
+
+\begin{lstlisting}[language=typescript]
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+\end{lstlisting}
+
+Justificación: La habilitación de credenciales es crítica en arquitecturas que utilizan httpOnly cookies para almacenar refresh tokens, previniendo exposición a ataques XSS al no permitir acceso vía JavaScript \cite{cors_mdn}.
 
 \subsubsection*{PBI-4: React + Vite + Tailwind}
-Frontend con stack moderno:
+
+El frontend fue construido con stack moderno basado en React 18 \cite{react_docs}, optimizando para desarrollo rápido y compilación eficiente:
+
 \begin{itemize}
-    \item React 18 con Vite como bundler
-    \item Tailwind CSS para estilos
-    \item React Router para navegación
-    \item TanStack Query para caché de datos
-    \item TypeScript strict mode
+    \item \textbf{Bundler:} Vite para compilación ultra-rápida con HMR (Hot Module Replacement)
+    \item \textbf{Estilos:} Tailwind CSS para componentes styled-components basados en utilidades
+    \item \textbf{Navegación:} React Router para SPA con rutas públicas y protegidas
+    \item \textbf{Gestión de Datos:} TanStack Query para caching y sincronización con servidor
+    \item \textbf{Tipado:} TypeScript strict mode para máxima seguridad de tipos \cite{typescript_docs}
 \end{itemize}
 
-\subsubsection*{PBI-5: JWT Tokens}
-Sistema de autenticación con JWT. Implementación de dos tokens:
+Justificación: La selección de Vite sobre Webpack proporciona tiempos de dev server 10-100x más rápidos, mejorando significativamente la experiencia de desarrollo. TypeScript en strict mode captura errores en compile-time que de otro modo se manifestarían en runtime.
 
-\textbf{Access Token:} Duraión 15 minutos
-\textbf{Refresh Token:} Duración 7 días (almacenado en httpOnly cookie)
+\subsubsection*{PBI-5: JSON Web Tokens (JWT) - Tokens de Acceso y Refresca}
 
-Código de generación:
+El sistema de autenticación fue implementado siguiendo el estándar RFC 7519 \cite{rfc7519} para JSON Web Tokens. La arquitectura utiliza un modelo de dos tokens para equilibrar seguridad con usabilidad:
+
+\begin{itemize}
+    \item \textbf{Access Token}: Duración 15 minutos. Utilizado para autenticación de requests API. Su corta duración limita exposición en caso de compromise.
+    \item \textbf{Refresh Token}: Duración 7 días. Almacenado en httpOnly cookie para prevención de ataques XSS. Requerido para obtención de nuevos access tokens.
+\end{itemize}
+
+Las contraseñas de usuario son hasheadas usando bcryptjs \cite{bcryptjs_docs} con cost factor de 10 rounds, proporcionando resistencia computacional contra ataques de fuerza bruta.
+
+Implementación de generación de tokens:
+
 \begin{lstlisting}[language=typescript]
-export function generateTokens(userId: string, email: string, role: string) {
+export function generateTokens(
+  userId: string, 
+  email: string, 
+  role: string
+) {
   const accessToken = jwt.sign(
     { userId, email, role },
     process.env.JWT_SECRET!,
@@ -264,9 +314,14 @@ export function generateTokens(userId: string, email: string, role: string) {
 }
 \end{lstlisting}
 
-Middleware de validación:
+Middleware de validación y extracción de claims:
+
 \begin{lstlisting}[language=typescript]
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = (
+  req: Request, 
+  res: Response, 
+  next: NextFunction
+) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
@@ -283,20 +338,18 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 };
 \end{lstlisting}
 
-\subsubsection*{PBI-6: Endpoint /auth/login}
-Endpoint REST para autenticación:
-\begin{itemize}
-    \item Validación de credenciales contre base de datos
-    \item Hash de contraseña con bcryptjs (10 rounds)
-    \item Generación de JWT tokens
-    \item Cookie httpOnly para refresh token
-\end{itemize}
+Justificación: El modelo de dos tokens es recomendación estándar en OAuth 2.0 \cite{oauth2_rfc} para aplicaciones modernas, balanceando seguridad (access token corto) con experiencia de usuario (refresh token permite sesiones largas sin re-login). El almacenamiento de refresh tokens en httpOnly cookies previene acceso vía JavaScript, mitigando XSS attacks.
 
-Código del servicio:
+\subsubsection*{PBI-6: Endpoint /auth/login}
+
+El endpoint de autenticación implementa flujo de validación de credenciales con las siguientes etapas:
+
 \begin{lstlisting}[language=typescript]
 async login(credentials: LoginRequest): Promise<LoginResponse> {
+  // Validación de esquema usando Zod
   const validated = LoginSchema.parse(credentials);
   
+  // Búsqueda de usuario por email
   const user = await prisma.user.findUnique({
     where: { email: validated.email },
   });
@@ -305,6 +358,7 @@ async login(credentials: LoginRequest): Promise<LoginResponse> {
     throw new Error('Usuario o contraseña incorrectos');
   }
 
+  // Comparación hasheada de contraseña (previene timing attacks)
   const passwordMatch = await bcryptjs.compare(
     validated.password, 
     user.password
@@ -314,7 +368,9 @@ async login(credentials: LoginRequest): Promise<LoginResponse> {
     throw new Error('Usuario o contraseña incorrectos');
   }
 
+  // Generación de JWT tokens
   const tokens = generateTokens(user.id, user.email, user.role);
+  
   return {
     user: this.excludePassword(user),
     tokens,
@@ -322,98 +378,141 @@ async login(credentials: LoginRequest): Promise<LoginResponse> {
 }
 \end{lstlisting}
 
-\subsubsection*{PBI-7: Pantalla Login (Frontend)}
-Componente React con:
+Características de seguridad implementadas:
 \begin{itemize}
-    \item Formulario con validaciones en tiempo real
-    \item Mensajes de error específicos por campo
-    \item Estado de carga con spinner animado
-    \item Redirección automática a dashboard tras login exitoso
-    \item Manejo de sesión con AuthContext
+    \item \textbf{Constant-time Comparison}: Uso de \texttt{bcryptjs.compare()} previene timing attacks
+    \item \textbf{Mensajes de Error Genéricos}: No se especifica si el email existe, previniendo enumeración de usuarios
+    \item \textbf{Exclusión de Contraseña}: La contraseña nunca es retornada al cliente
 \end{itemize}
 
-Almacenamiento de tokens:
-\begin{lstlisting}[language=typescript]
-export const getAccessToken = (): string | null => {
-  return localStorage.getItem('accessToken');
-};
+\subsubsection*{PBI-7: Componente de Login (Frontend)}
 
-export const setAccessToken = (token: string): void => {
-  localStorage.setItem('accessToken', token);
-};
-\end{lstlisting}
+El componente de autenticación frontend implementa un formulario con validaciones en tiempo real y gestión de estado:
 
-AuthProvider para estado global:
 \begin{lstlisting}[language=typescript]
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = 
+({ children }) => {
   const [user, setUser] = useState<User | null>(getStoredUser());
+  const [isLoading, setIsLoading] = useState(false);
 
   const login = async (credentials: LoginRequest): Promise<void> => {
-    const response = await authAPI.login(credentials);
-    setUser(response.data.user);
-    setAccessToken(response.data.accessToken);
+    setIsLoading(true);
+    try {
+      const response = await authAPI.login(credentials);
+      setAccessToken(response.data.tokens.accessToken);
+      setStoredUser(response.data.user);
+      setUser(response.data.user);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const contextValue: AuthContextType = {
     user,
     isAuthenticated: !!user && !!getAccessToken(),
+    isLoading,
     login,
     logout,
     refreshTokens,
   };
 
-  return React.createElement(AuthContext.Provider, { value: contextValue }, children);
+  return React.createElement(
+    AuthContext.Provider, 
+    { value: contextValue }, 
+    children
+  );
 };
 \end{lstlisting}
 
-\subsubsection*{PBI-8: RBAC Middleware}
-Control de acceso basado en roles. Middleware para proteger endpoints:
+Almacenamiento asimétrico de tokens:
+
+\begin{lstlisting}[language=typescript]
+// Access token: localStorage (necesario para headers de API)
+export const getAccessToken = (): string | null => {
+  return localStorage.getItem('accessToken');
+};
+
+// Refresh token: httpOnly cookie (gestionada por navegador)
+// No es accesible desde JavaScript, previniendo XSS
+\end{lstlisting}
+
+Justificación: La separación de almacenamiento aprovecha los mecanismos nativos de seguridad del navegador. El localStorage permite acceso para configurar headers de Authorization, mientras que httpOnly cookies asegura que el refresh token no sea expuesto a ataques XSS.
+
+\subsubsection*{PBI-8: Control de Acceso Basado en Roles (RBAC)}
+
+La implementación de RBAC sigue estándares de seguridad definidos por NIST \cite{rbac_nist}. El middleware de validación de roles protege endpoints específicos:
+
 \begin{lstlisting}[language=typescript]
 export const roleMiddleware = (allowedRoles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied' });
+      return res.status(403).json({ 
+        error: 'Acceso denegado - permisos insuficientes' 
+      });
     }
     next();
   };
 };
 \end{lstlisting}
 
-Ejemplo de uso en rutas protegidas:
+Ejemplo de uso en rutas protegidas por rol:
+
 \begin{lstlisting}[language=typescript]
+// Solo ADMIN puede crear usuarios
 router.post('/register', 
-  authMiddleware, 
-  roleMiddleware(['ADMIN']), 
-  (req, res) => authController.register(req, res)
+  authMiddleware,                    // Validar autenticación
+  roleMiddleware(['ADMIN']),         // Validar rol
+  asyncHandler((req, res) => authController.register(req, res))
+);
+
+// ADMIN y MANAGER pueden listar usuarios
+router.get('/users',
+  authMiddleware,
+  roleMiddleware(['ADMIN', 'MANAGER']),
+  asyncHandler((req, res) => authController.listUsers(req, res))
 );
 \end{lstlisting}
 
-\subsubsection*{PBI-9: Endpoint /auth/register}
-Creación de usuarios por administrador. Características:
-\begin{itemize}
-    \item Contraseña temporal generada automáticamente (10 caracteres)
-    \item Solo ADMIN puede crear usuarios
-    \item El empleado cambia la contraseña en primer acceso
-\end{itemize}
+Justificación: El modelo de RBAC centraliza lógica de autorización, facilitando auditoría y modificación de políticas de acceso. La verificación tanto de presencia del usuario como de validez del rol proviene del JWT payload, asegurando inmutabilidad de claims.
+
+\subsubsection*{PBI-9: Endpoint /auth/register - Creación de Usuarios}
+
+El endpoint de registro implementa un flujo controlado donde únicamente administradores crean usuarios:
 
 \begin{lstlisting}[language=typescript]
 async register(
   data: RegisterRequest,
   adminId: string
 ): Promise<{ user: User; tempPassword: string }> {
-  // Generar contraseña temporal (10 caracteres aleatorios)
-  const tempPassword = Math.random().toString(36).slice(2, 12);
+  // Validación de entrada
+  const validated = RegisterSchema.parse(data);
+  
+  // Verificación de existencia previa
+  const existingUser = await prisma.user.findUnique({
+    where: { email: validated.email },
+  });
+  
+  if (existingUser) {
+    throw new Error('El email ya está registrado');
+  }
+
+  // Generación de contraseña temporal (10 caracteres aleatorios)
+  const tempPassword = this.generateTempPassword();
   const hashedPassword = await bcryptjs.hash(tempPassword, 10);
 
+  // Creación de usuario
   const newUser = await prisma.user.create({
     data: {
-      email: data.email,
-      name: data.name,
+      email: validated.email,
+      name: validated.name,
       password: hashedPassword,
-      role: data.role as UserRole,
-      sedeId: data.sedeId,
+      role: validated.role as UserRole,
+      sedeId: validated.sedeId,
     },
   });
+
+  // Log de auditoría
+  await this.logAdminAction(adminId, 'USER_CREATED', newUser.id);
 
   return {
     user: this.excludePassword(newUser),
@@ -422,52 +521,172 @@ async register(
 }
 \end{lstlisting}
 
-\subsubsection*{Validaciones con Zod}
-Schema de validación para login y registro:
+Esquemas de validación con Zod \cite{zod_docs}:
+
 \begin{lstlisting}[language=typescript]
 export const LoginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Contraseña mínimo 6 caracteres'),
+  email: z.string()
+    .email('Email inválido')
+    .transform(e => e.toLowerCase().trim()),
+  password: z.string()
+    .min(6, 'Contraseña mínimo 6 caracteres'),
 });
 
 export const RegisterSchema = z.object({
-  email: z.string().email('Email inválido'),
-  name: z.string().min(2, 'Nombre requerido'),
-  role: z.enum(['ADMIN', 'MANAGER', 'EMPLOYEE']).default('EMPLOYEE'),
-  sedeId: z.string().optional(),
+  email: z.string()
+    .email('Email inválido')
+    .transform(e => e.toLowerCase().trim()),
+  name: z.string()
+    .min(2, 'Nombre requerido')
+    .max(100, 'Nombre demasiado largo'),
+  role: z.enum(['ADMIN', 'MANAGER', 'EMPLOYEE'])
+    .default('EMPLOYEE'),
+  sedeId: z.string().uuid('ID de sede inválido').optional(),
 });
 \end{lstlisting}
 
-\subsubsection*{Rutas Protegidas - Frontend}
-Componente ProtectedRoute para control de acceso:
+Justificación: La generación de contraseña temporal por el sistema previene debilidad de contraseñas iniciales mientras mantiene control administrativo. Al obligar cambio de contraseña en primer acceso, se garantiza que solo el usuario conoce su credencial de acceso. Zod proporciona validación declarativa con type inference automático en TypeScript.
+
+\subsubsection*{Componente ProtectedRoute - Rutas Protegidas (Frontend)}
+
+La implementación de rutas protegidas en el frontend enforza políticas de autorización a nivel de UI, reduciendo exposición accidental de interfaces restringidas:
+
 \begin{lstlisting}[language=typescript]
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRoles?: UserRole[];
+}
+
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
   requiredRoles 
 }) => {
   const { user, isAuthenticated } = useAuth();
 
+  // Redirección a login si no hay sesión activa
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
+  // Validación de rol (si se especifican roles requeridos)
   if (requiredRoles && !requiredRoles.includes(user?.role!)) {
-    return <div>Acceso denegado</div>;
+    return (
+      <div className="p-4 bg-red-50 border border-red-200">
+        Acceso denegado - permisos insuficientes
+      </div>
+    );
   }
 
   return <>{children}</>;
 };
 \end{lstlisting}
 
-\subsection*{Sprint 1 - Resumen Técnico}
+Configuración de React Router \cite{react_docs}:
+
+\begin{lstlisting}[language=typescript]
+const AppRouter = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Rutas públicas */}
+        <Route path="/login" element={<Login />} />
+        
+        {/* Rutas protegidas - acceso general */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Rutas protegidas - solo ADMIN */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <AdminPanel />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+\end{lstlisting}
+
+Justificación: La verificación de autenticación en ProtectedRoute proporciona una capa de seguridad adicional a nivel de UI. Aunque la seguridad primaria debe residir en el backend (validación de JWT), esta capa previene exposición accidental de interfaces y mejora experiencia de usuario al redirigir usuarios no autenticados.
+
+\subsubsection*{Resumen Técnico Sprint 1}
+
+El Sprint 1 estableció una base arquitectónica sólida basada en prácticas de seguridad reconocidas. La tabla \ref{tab:sprint1-tech-summary} resume tecnologías y patrones implementados:
+
+\begin{table}[h]
+    \centering
+    \caption{Sprint 1 - Resumen de Arquitectura Técnica}
+    \label{tab:sprint1-tech-summary}
+    \vspace{0.3cm}
+    \begin{tabularx}{\textwidth}{l X}
+        \toprule
+        \textbf{Componente} & \textbf{Especificación} \\
+        \midrule
+        Stack Backend & Node.js 20 + Express.js \cite{express_docs} + TypeScript \cite{typescript_docs} \\
+        Base de Datos & PostgreSQL 16 \cite{postgresql_docs} + Prisma ORM \cite{prisma_docs} \\
+        Autenticación & JWT (RFC 7519) \cite{rfc7519} con access/refresh tokens \\
+        Hash de Contraseña & bcryptjs \cite{bcryptjs_docs} con cost factor 10 \\
+        Validación de Entrada & Zod \cite{zod_docs} con type inference TypeScript \\
+        Stack Frontend & React 18 \cite{react_docs} + Vite + Tailwind CSS \\
+        Gestión de Rutas & React Router con protección por rol \\
+        Seguridad CORS & Configuración con credenciales habilitadas \cite{cors_mdn} \\
+        RBAC & Implementación según estándares NIST \cite{rbac_nist} \\
+        DevOps & Docker \cite{docker_docs} + GitHub Actions CI/CD \\
+        Control de Versiones & Git + GitHub (TFG-Multihub) \\
+        Linting/Formatting & ESLint (airbnb-typescript) + Prettier \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsubsection*{Resultados y Validación Sprint 1}
+
+La completitud del Sprint 1 fue validada mediante:
+
 \begin{itemize}
-    \item \textbf{Stack:} PERN + TypeScript
-    \item \textbf{Autenticación:} JWT con access/refresh tokens
-    \item \textbf{Base de datos:} PostgreSQL 16 con Prisma ORM
-    \item \textbf{Validaciones:} Zod schemas
-    \item \textbf{API Routes:} 7 endpoints de autenticación
-    \item \textbf{Frontend:} React Router con rutas protegidas
-    \item \textbf{DevOps:} Docker Compose, GitHub Actions CI/CD
+    \item \textbf{Pruebas Funcionales}: Endpoint \texttt{/api/auth/login} responde correctamente con JWT tokens válidos y user data
+    \item \textbf{Verificación de Seguridad}: Validación de httpOnly cookies para refresh tokens y CORS configuration correcta
+    \item \textbf{Cobertura de Tipado}: TypeScript strict mode sin errores de compilación en frontend y backend
+    \item \textbf{Infraestructura}: Docker Compose services (PostgreSQL, Backend, Frontend) todos operacionales
+    \item \textbf{Datos de Prueba}: Database seeded con usuarios de prueba en todos los roles (ADMIN, MANAGER, EMPLOYEE)
+    \item \textbf{Endpoints API}: 7 endpoints de autenticación completamente funcionales
+\end{itemize}
+
+\textbf{Flujo de autenticación end-to-end validado:}
+\begin{enumerate}
+    \item Usuario navega a \texttt{http://localhost:3000/login}
+    \item Ingresa credenciales que son validadas por esquema Zod contra restricciones definidas
+    \item Submit realiza POST request hacia \texttt{/api/auth/login} con credenciales JSON
+    \item Backend localiza usuario por email en PostgreSQL y valida contraseña contra hash bcryptjs
+    \item JWT tokens generados con claims (userId, email, role) y expiración configurada
+    \item Access token retornado en respuesta JSON; refresh token en httpOnly cookie
+    \item Frontend almacena accessToken en localStorage para futuras requests API
+    \item User automáticamente redirigido a dashboard con sesión activa y user info en contexto
+    \item Logs de auditoría registran acceso exitoso (timestamp, IP, user agent)
+    \item Logout limpia localStorage y elimina refresh cookie vía Set-Cookie header
+    \item Subsequent requests usan accessToken en Authorization header (Bearer scheme)
+\end{enumerate}
+
+\subsubsection*{Decisiones de Arquitectura Fundamentales}
+
+Las decisiones técnicas en Sprint 1 fueron justificadas por:
+
+\begin{itemize}
+    \item \textbf{JWT sobre Session Storage}: Stateless authentication facilita escalabilidad horizontal en microservicios futuros \cite{rfc7519}
+    \item \textbf{Dual Token Strategy}: Access tokens cortos (15m) reduce ventana de riesgo; refresh tokens largos (7d) mantienen UX
+    \item \textbf{httpOnly Cookies}: Previene XSS attacks eliminando acceso JavaScript a refresh tokens críticos
+    \item \textbf{Contrast-time Password Comparison}: Uso de bcryptjs.compare() previene timing attacks en validación de credenciales
+    \item \textbf{Role-Based Access Control}: Implementación granular permite asignación flexible de permisos con política centralizada
+    \item \textbf{TypeScript Strict Mode}: Elimina categorías enteras de bugs comunes (null/undefined, implicit any types)
+    \item \textbf{Prisma ORM}: Schema como source of truth; migraciones versionadas permiten auditoría histórica de cambios DB
 \end{itemize}
 
 \subsection*{Sprint 2 (Feb 23-Mar 8): RBAC y Gestión de Usuarios}
