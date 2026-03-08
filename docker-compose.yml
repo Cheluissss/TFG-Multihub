@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15
+    container_name: multihub_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: multihub_user
+      POSTGRES_PASSWORD: multihub_pass
+      POSTGRES_DB: multihub_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: multihub_backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://multihub_user:multihub_pass@db:5432/multihub_db
+      JWT_SECRET: ${JWT_SECRET:-change_this_secret_before_production}
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: multihub_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
